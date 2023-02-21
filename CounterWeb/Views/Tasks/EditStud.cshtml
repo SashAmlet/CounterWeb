@@ -1,0 +1,72 @@
+﻿@model CounterWeb.Models.Task
+
+@{
+    ViewData["Title"] = "EditStud";
+}
+
+
+    @*Шапка*@
+    <section class="u-clearfix u-section-1" id="sec-9532">
+      <div class="u-clearfix u-sheet u-sheet-1">
+        <div class="u-container-style u-group u-shape-rectangle u-group-1">
+          <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-icon-1"><img src="/img/taskico.png" alt=""></span>
+            <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@Model.Name</h1>
+            <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
+            </h4>
+            <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">@Model.CompletedTasks.FirstOrDefault().Grade / @Model.MaxGrade балів</h3>
+            <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
+      <div class="u-clearfix u-sheet u-sheet-1">
+        <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
+          <h1 style="text-align: left;">
+            <span style="line-height: 2.0;">Завдання:</span>
+          </h1>
+          <p style="text-align: left;">
+            <span style="line-height: 2.0;">@Model.Description</span>
+          </p>
+        </div>
+      </div>
+    </section>
+    @*Основна частина*@
+    <form asp-action="EditStud" style="margin-bottom:70px">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="TaskId" />
+            <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
+                <div class="u-clearfix u-sheet u-sheet-1">
+                    <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
+                        <h1 style="text-align: left;">
+                            <span style="line-height: 2.0;">
+                                <label @*asp-for="Description"*@ class="control-label1">Відповідь</label>
+                            </span>
+                        </h1>
+                        <div class="form-group1">
+                    @Html.TextAreaFor(m => m.CompletedTasks.FirstOrDefault().Solution, new { @class = "form-control"}) 
+                            <span asp-validation-for="CompletedTasks.FirstOrDefault().Solution" class="text-danger1"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        <input type="hidden" value="@Model.CourseId" name="CourseId"/>
+        <input type="hidden" value="@Model.Name" name="Name"/>
+        <input type="hidden" value="@Model.Description" name="Description"/>
+        <input type="hidden" value="@Model.MaxGrade" name="MaxGrade"/>
+
+        <section>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+            <div>
+                <a asp-action="Index" asp-route-id="@Model?.CourseId">Back to List</a>
+            </div>
+        </section>
+
+    </form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
