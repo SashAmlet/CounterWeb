@@ -4,71 +4,80 @@
     ViewData["Title"] = "Edit";
 }
 
-        <form asp-action="Edit" style="margin-bottom:70px">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="TaskId" />
-            @*Шапка*@
-            <section class="u-clearfix u-section-1" id="sec-9532">
-                <div class="u-clearfix u-sheet u-sheet-1">
-                    <div class="u-container-style u-group u-shape-rectangle u-group-1">
-                    <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-icon-1"><img src="/img/taskico.png" alt=""></span>
-                        <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">
-                            <div class="form-group">
-                                <input asp-for="Name" class="form-control" style="
-                                                                                font-size: 3rem;
-                                                                                color: #4c7397 !important;
-                                                                                width: fit-content;"/>
-                                <span asp-validation-for="Name" class="text-danger"></span>
-                            </div>
-                        </h1>
-                            <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
-                        </h4>
-                        <div class="u-text u-text-default u-text-3" style="display:flex">
+<form asp-action="Edit" style="margin-bottom:70px">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="TaskId" />
+
+    @*Шапка*@
+    <section class="u-clearfix u-section-1" id="sec-9532">
+        <div class="u-clearfix u-sheet u-sheet-1">
+            <div class="u-container-style u-group u-shape-rectangle u-group-1">
+                <div class="u-container-layout u-container-layout-1">
+                    <span class="u-file-icon u-icon u-icon-1">
+                        <img src="/img/taskico.png" alt="">
+                    </span>
+                    <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">
+                        <div class="form-group">
+                            <input asp-for="Name" class="form-control" style="
+                                font-size: 3rem;
+                                color: #4c7397 !important;
+                                width: fit-content;"/>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                    </h1>
+                    <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
+                    </h4>
+                    <div class="u-text u-text-default u-text-3" style="display:flex">
+                        @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                        {
                             <input asp-for="CompletedTasks.ToList()[0].Grade" class="form-control" style="
-                                                                                display:inline-block;
-                                                                                font-size: 1rem;
-                                                                                width: fit-content;"/>
-                            <span asp-validation-for="CompletedTasks.ToList()[0].Grade" class="text-danger"></span>
-                            <lable style="font-size:x-large"> / </lable>
-                            <input asp-for="MaxGrade" class="form-control" style="
-                                                                                display:inline-block;
-                                                                                font-size: 1rem;
-                                                                                width: fit-content;"/>
-                            <span asp-validation-for="MaxGrade" class="text-danger"></span>
-                            <label style="font-size:x-large"> балів</label>
-                        </div>
-                        <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
+                                display:inline-block;
+                                font-size: 1rem;
+                                width: fit-content;"/>
+                            <input type="hidden" asp-for="CompletedTasks.ToList()[0].CompletedTaskId"/>
+                            <input type="hidden" asp-for="CompletedTasks.ToList()[0].Solution"/>
+                            <input type="hidden" asp-for="CompletedTasks.ToList()[0].TaskId"/>
+                        }                        
+                        <span asp-validation-for="CompletedTasks.ToList()[0].Grade" class="text-danger"></span>
+                        <lable style="font-size:x-large"> / </lable>
+                        <input asp-for="MaxGrade" class="form-control" style="
+                            display:inline-block;
+                            font-size: 1rem;
+                            width: fit-content;"/>
+                        <span asp-validation-for="MaxGrade" class="text-danger"></span>
+                        <label style="font-size:x-large"> балів</label>
                     </div>
-                    </div>
+                    <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
                 </div>
-            </section>
+            </div>
+        </div>
+    </section>
             @*Основна частина*@
-            <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
-                <div class="u-clearfix u-sheet u-sheet-1">
-                    <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
-                        <h1 style="text-align: left;">
-                            <span style="line-height: 2.0;">
-                                <label @*asp-for="Description"*@ class="control-label1">Завдання</label>
-                            </span>
-                        </h1>
-                        <div class="form-group1">
-                            @Html.TextAreaFor(m => m.Description, new { @class = "form-control"}) 
-                            <span asp-validation-for="Description" class="text-danger1"></span>
-                        </div>
-                    </div>
+    <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
+        <div class="u-clearfix u-sheet u-sheet-1">
+            <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
+                <h1 style="text-align: left;">
+                    <span style="line-height: 2.0;">
+                        <label asp-for="Description" class="control-label1">Завдання</label>
+                    </span>
+                </h1>
+                 <div class="form-group1">
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", placeholder = "Формулювання завдання", style = "height: 200px" }) 
+                    <span asp-validation-for="Description" class="text-danger1"></span>
                 </div>
-            </section>
-
-            <input type="hidden" value="@Model.CourseId" name="CourseId"/>
-
-
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
             </div>
-            <div>
-                <a asp-action="Index" asp-route-id="@Model?.CourseId">Back to List</a>
-            </div>
-        </form>
+        </div>
+    </section>
+
+    <input type="hidden" value="@Model.CourseId" name="CourseId"/>
+
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+    <div>
+        <a asp-action="Index" asp-route-id="@Model?.CourseId">Back to List</a>
+    </div>
+</form>
 
 
 

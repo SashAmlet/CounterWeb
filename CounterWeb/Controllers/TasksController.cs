@@ -66,7 +66,7 @@ namespace CounterWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int courseId, [Bind("TaskId,CourseId,Name,Description,Grade,Solution")] Task task)
+        public async Task<IActionResult> Create(int courseId, [Bind("TaskId,CourseId,Name,Description,MaxGrade")] Task task)
         {
             task.CourseId = courseId;
             if (ModelState.IsValid)
@@ -95,6 +95,11 @@ namespace CounterWeb.Controllers
             {
                 return NotFound();
             }
+            else if(task.CompletedTasks.Count == 0)
+            {
+                task.CompletedTasks.Add(new CompletedTask());
+                task.CompletedTasks.ToList()[0].TaskId = task.TaskId;
+            }
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             task.Course = _context.Courses.Where(c => c.CourseId == task.CourseId).FirstOrDefault();
             return View(task);
@@ -105,7 +110,7 @@ namespace CounterWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int taskId, [Bind("TaskId,CourseId,Name,Description,MaxGrade,CompletedTasks")] Task task)
+        public async Task<IActionResult> Edit(int taskId, [Bind("TaskId,CourseId,Name,Description,MaxGrade")] Task task, ICollection<CompletedTask> completedTasks)
         {
             if (taskId != task.TaskId)
             {
@@ -116,6 +121,9 @@ namespace CounterWeb.Controllers
             {
                 try
                 {
+                    completedTasks.ToList()[0].UserCourseId = 0;
+                    completedTasks.ToList()[0].Task = task;
+                    task.CompletedTasks = completedTasks;
                     _context.Update(task);
                     await _context.SaveChangesAsync();
                 }
@@ -160,7 +168,7 @@ namespace CounterWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditStud(int taskId, [Bind("TaskId,CourseId,Name,Description,MaxGrade, CompletedTasks.FirstOrDefault().Solution")] Task task)
+        public async Task<IActionResult> EditStud(int taskId, [Bind("TaskId,CourseId,Name,Description,MaxGrade")] Task task, ICollection<CompletedTask> completedTasks)
         {
             if (taskId != task.TaskId)
             {
@@ -171,6 +179,9 @@ namespace CounterWeb.Controllers
             {
                 try
                 {
+                    completedTasks.ToList()[0].UserCourseId = 0;
+                    completedTasks.ToList()[0].Task = task;
+                    task.CompletedTasks = completedTasks;
                     _context.Update(task);
                     await _context.SaveChangesAsync();
                 }

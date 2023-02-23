@@ -44,8 +44,14 @@
                             </span>
                         </h1>
                         <div class="form-group1">
-                    @Html.TextAreaFor(m => m.CompletedTasks.FirstOrDefault().Solution, new { @class = "form-control"}) 
-                            <span asp-validation-for="CompletedTasks.FirstOrDefault().Solution" class="text-danger1"></span>
+                            @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                            {
+                                @Html.TextAreaFor(m => m.CompletedTasks.ToList()[0].Solution, new { @class = "form-control", placeholder = "Рішення для завдання", style = "height: 200px" }) 
+                                <span asp-validation-for="CompletedTasks.ToList()[0].Solution" class="text-danger1"></span>
+                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].CompletedTaskId"/>
+                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].Grade"/>
+                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].TaskId"/>
+                            }
                         </div>
                     </div>
                 </div>

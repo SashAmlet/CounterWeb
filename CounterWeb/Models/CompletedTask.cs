@@ -15,5 +15,5 @@ public partial class CompletedTask
 
     public int? UserCourseId { get; set; }
 
-    public virtual Task Task { get; set; } = null!;
+    public virtual Task? Task { get; set; } = null!;
 }
