@@ -158,6 +158,11 @@ namespace CounterWeb.Controllers
             {
                 return NotFound();
             }
+            else if (task.CompletedTasks.Count == 0)
+            {
+                task.CompletedTasks.Add(new CompletedTask());
+                task.CompletedTasks.ToList()[0].TaskId = task.TaskId;
+            }
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             task.Course = _context.Courses.Where(c => c.CourseId == task.CourseId).FirstOrDefault();
             return View(task);
@@ -230,14 +235,18 @@ namespace CounterWeb.Controllers
             {
                 return Problem("Entity set 'CounterDbContext.Tasks'  is null.");
             }
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks.Include(b => b.CompletedTasks)
+                .FirstOrDefaultAsync(m => m.TaskId == id);
+            int CourseId = task.CourseId;
             if (task != null)
             {
+                foreach(var c in task.CompletedTasks)
+                    _context.CompletedTasks.Remove(c);
                 _context.Tasks.Remove(task);
             }
             
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", new { id = CourseId });
         }
 
         private bool TaskExists(int id)

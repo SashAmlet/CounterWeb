@@ -1,51 +1,33 @@
 ﻿@model IEnumerable<CounterWeb.Models.Task>
 
 @{
-    ViewData["Title"] = "Завдання в курсі";
+ViewData["Title"] = "Завдання в курсі";
 }
+
+<link rel="stylesheet" type="text/css" href="~/css/taskIndex.css">
 
 <h1>Завдання в курсі @ViewBag.Name</h1>
-
 <p>
-    @*<a asp-action="Create" asp-route-id="@ViewBag.Id">Додати завдання</a>*@
     @Html.ActionLink("Додати завдання", "Create", new{courseId = @ViewBag.Id})
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                Grade
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Course)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) <!--Повинен витягти оцінку з юзера-->
-                <label>/</label>
-                @Html.DisplayFor(modelItem => item.MaxGrade)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Course.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.TaskId">Редагувати завдання</a> |
-                <a asp-action="EditStud" asp-route-id="@item.TaskId">Виконати завдання</a> |
-                <a asp-action="Details" asp-route-id="@item.TaskId">Переглянути завдання</a> |
-                <a asp-action="Delete" asp-route-id="@item.TaskId">Видалити завдання</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="product-container">
+    @foreach (var item in Model)
+    {
+        <div class="product">
+          <h2>@Html.DisplayFor(modelItem => item.Name)</h2>
+          <p>@Html.DisplayFor(modelItem => item.Course.Name)</p>
+          <p>Оцінка: @Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)</p>
+          <div class="actions">
+            <a class="btn execute" asp-action="EditStud" asp-route-id="@item.TaskId">Виконати завдання</a>
+            <a class="btn details" asp-action="Details" asp-route-id="@item.TaskId">Переглянути завдання</a>
+            <div class="actions-dropdown">
+            <button class="actions-dropdown-button">•••</button>
+              <div class="actions-dropdown-content">
+                <a class="btn edit" asp-action="Edit" asp-route-id="@item.TaskId">Редагувати завдання</a>
+                <a class="btn delete" asp-action="Delete" asp-route-id="@item.TaskId">Видалити завдання</a>
+              </div>
+            </div>
+          </div>
+        </div>
+    }
+</div>

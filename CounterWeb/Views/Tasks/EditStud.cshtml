@@ -13,8 +13,13 @@
             <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@Model.Name</h1>
             <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
             </h4>
-            <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">@Model.CompletedTasks.FirstOrDefault().Grade / @Model.MaxGrade балів</h3>
-            <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
+            <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">
+                @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                    {
+                        @Model.CompletedTasks.FirstOrDefault().Grade
+                    }
+                    / @Model.MaxGrade балів</h3>
+                <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
           </div>
         </div>
       </div>
