@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CounterWeb.Models;
+using CounterWeb.Controllers;
 
 namespace CounterWeb.Controllers
 {
@@ -141,13 +142,23 @@ namespace CounterWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            //TasksController tasksController = new TasksController(_context);
+
             if (_context.Courses == null)
             {
                 return Problem("Entity set 'CounterDbContext.Courses'  is null.");
             }
-            var course = await _context.Courses.FindAsync(id);
+            var course = await _context.Courses.Include(b => b.Tasks)
+                .FirstOrDefaultAsync(m => m.CourseId == id);
             if (course != null)
             {
+                foreach(var task in course.Tasks)
+                {
+                    var compTasks = _context.CompletedTasks.Where(b => b.TaskId == task.TaskId).ToList();
+                    foreach (var ct in compTasks)
+                        _context.CompletedTasks.Remove(ct);
+                    _context.Tasks.Remove(task);
+                }
                 _context.Courses.Remove(course);
             }
             

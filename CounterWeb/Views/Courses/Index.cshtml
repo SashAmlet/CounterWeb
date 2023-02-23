@@ -4,12 +4,36 @@
     ViewData["Title"] = "Назва курсів";
 }
 
+<link rel="stylesheet" type="text/css" href="~/css/taskIndex.css">
+
 <h1>Назва курсів</h1>
 
 <p>
     <a asp-action="Create">Створити курс</a>
 </p>
-<table class="table">
+
+<div class="product-container">
+    @foreach (var item in Model)
+    {
+            <div class="product">
+                <h2>@Html.DisplayFor(modelItem => item.Name)</h2>
+                <p>@Html.DisplayFor(modelItem => item.ZoomLink)</p>
+                <div class="actions">
+                    <a class="btn details" asp-action="Details" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a>
+                    <div class="actions-dropdown">
+                        <button class="actions-dropdown-button">•••</button>
+                        <div class="actions-dropdown-content">
+                            <a class="btn edit" asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a>
+                            <a class="btn delete" asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    }
+</div>
+
+
+@*<table class="table">
     <thead>
         <tr>
             <th>
@@ -22,20 +46,22 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ZoomLink)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a> |
-                <a asp-action="Details" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a> |
-                <a asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ZoomLink)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a> |
+                    <a asp-action="Details" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a> |
+                    <a asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+*@

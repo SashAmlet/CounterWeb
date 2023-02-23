@@ -237,10 +237,12 @@ namespace CounterWeb.Controllers
             }
             var task = await _context.Tasks.Include(b => b.CompletedTasks)
                 .FirstOrDefaultAsync(m => m.TaskId == id);
-            int CourseId = task.CourseId;
+
+            int CourseId = 0;
             if (task != null)
             {
-                foreach(var c in task.CompletedTasks)
+                CourseId = task.CourseId;
+                foreach (var c in task.CompletedTasks)
                     _context.CompletedTasks.Remove(c);
                 _context.Tasks.Remove(task);
             }
