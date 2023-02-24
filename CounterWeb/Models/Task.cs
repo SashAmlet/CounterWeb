@@ -15,7 +15,7 @@ public partial class Task
 
     public int? MaxGrade { get; set; }
 
-    public virtual ICollection<CompletedTask> CompletedTasks { get; set; } = new List<CompletedTask>();
+    public virtual ICollection<CompletedTask>? CompletedTasks { get; set; } = new List<CompletedTask>();
 
     public virtual Course? Course { get; set; } = null!;
 }

@@ -31,8 +31,6 @@ public partial class CounterDbContext : DbContext
 
     public virtual DbSet<UserCourse> UserCourses { get; set; }
 
-    public virtual DbSet<UserRegInfo> UserRegInfos { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=MYPC;Database=CounterDB;Trusted_Connection=True;Trust Server Certificate=True;");
@@ -145,8 +143,6 @@ public partial class CounterDbContext : DbContext
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.RegInfoId, "UQ__UserInfo__8A8A243B3DDD2D86").IsUnique();
-
             entity.HasIndex(e => e.PersonalizationId, "UQ__UserInfo__964922B4C701DB01").IsUnique();
 
             entity.Property(e => e.UserId).ValueGeneratedNever();
@@ -178,21 +174,6 @@ public partial class CounterDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.UserCourses)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_UserNCourse_UserInfo");
-        });
-
-        modelBuilder.Entity<UserRegInfo>(entity =>
-        {
-            entity.HasKey(e => e.RegInformationId).HasName("PK__UserRegI__8A8A243AB5AEBCB2");
-
-            entity.ToTable("UserRegInfo");
-
-            entity.Property(e => e.RegInformationId).ValueGeneratedNever();
-            entity.Property(e => e.Login)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Password)
-                .HasMaxLength(50)
-                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

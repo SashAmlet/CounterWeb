@@ -7,8 +7,6 @@ public partial class User
 {
     public int UserId { get; set; }
 
-    public int? RegInfoId { get; set; }
-
     public int? PersonalizationId { get; set; }
 
     public string FirstName { get; set; } = null!;
