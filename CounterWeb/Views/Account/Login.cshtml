@@ -1,0 +1,32 @@
+﻿@model CounterWeb.ViewModel.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<link rel="stylesheet" href="~/css/RegForm.css" />
+<body>
+    <form method="post" asp-controller="Account" asp-action="Login"
+        asp-route-returnUrl="@Model.ReturnUrl">
+        <div asp-validation-summary="ModelOnly"></div>
+    
+
+        <h2>Авторизація користувача</h2>
+
+        <label asp-for="Email"></label><br />
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email"></span>
+
+        <label asp-for="Password"></label><br />
+        <input asp-for="Password" class="form-control" />
+        <span asp-validation-for="Password"></span>
+
+        <div class="form-check">
+            <input asp-for="RememberMe" type="checkbox" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label">Запам'ятати мене</label>
+        </div>
+
+
+        <input type="submit" value="Увійти" class="btn btn-primary">
+    </form>
+</body>

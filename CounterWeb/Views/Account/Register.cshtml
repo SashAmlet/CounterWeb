@@ -1,0 +1,35 @@
+﻿@model CounterWeb.ViewModel.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<link rel="stylesheet" href="~/css/RegForm.css" />
+<body>
+    <form method="post" asp-controller="Account" asp-action="Register">
+        <div asp-validation-summary="ModelOnly"></div>
+
+        <h2>Реєстрація нового користувача</h2>
+        <label asp-for="FirstName"></label><br />
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName"></span>
+
+        <label asp-for="LastName"></label><br />
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName"></span>
+
+        <label asp-for="Email"></label><br />
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email"></span>
+
+        <label asp-for="Password"></label><br />
+        <input asp-for="Password" class="form-control" />
+        <span asp-validation-for="Password"></span>
+
+        <label asp-for="PasswordConfirm"></label><br />
+        <input asp-for="PasswordConfirm" class="form-control" />
+        <span asp-validation-for="PasswordConfirm"></span>
+
+        <input type="submit" value="Зареєструватись" class="btn btn-primary">
+    </form>
+</body>
