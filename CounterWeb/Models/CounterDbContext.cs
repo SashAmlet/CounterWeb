@@ -146,9 +146,6 @@ public partial class CounterDbContext : DbContext
             entity.HasIndex(e => e.PersonalizationId, "UQ__UserInfo__964922B4C701DB01").IsUnique();
 
             entity.Property(e => e.UserId).ValueGeneratedNever();
-            entity.Property(e => e.EmailAddr)
-                .HasMaxLength(50)
-                .IsUnicode(false);
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .IsUnicode(false);

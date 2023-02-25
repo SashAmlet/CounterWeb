@@ -25,7 +25,7 @@ namespace CounterWeb.Controllers
         {
             if(ModelState.IsValid)
             {
-                User user = new User { FirstName = model.FirstName, LastName = model.LastName, Email = model.Email, EmailAddr = model.Email, UserName = model.Email };
+                User user = new User { FirstName = model.FirstName, LastName = model.LastName, Email = model.Email, UserName = model.Email };
                 var result = await _userManager.CreateAsync(user, model.Password); // закидаємо користувача до бд-шки
                 if (result.Succeeded)
                 {
