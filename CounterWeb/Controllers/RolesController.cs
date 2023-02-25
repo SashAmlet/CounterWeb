@@ -1,10 +1,12 @@
 ﻿using CounterWeb.Models;
 using CounterWeb.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CounterWeb.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class RolesController : Controller
     {
         RoleManager<IdentityRole> _roleManager;
@@ -63,8 +65,6 @@ namespace CounterWeb.Controllers
 
             return NotFound();
         }
-
-
 
     }
 }

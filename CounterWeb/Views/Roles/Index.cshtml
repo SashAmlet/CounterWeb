@@ -1,4 +1,23 @@
 ﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole>
+<style>
+
+.user_list {
+  display: inline-block;
+  background-color: #f5f5f5;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-top: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.user_list:hover {
+  background-color: #ddd;
+}
+
+
+</style>
 
 <h2>Список ролей</h2>
 <table class="table">
@@ -16,4 +35,4 @@
         </tr>
     }
 </table>
-<a asp-action="UserList">Список користувачів</a>
+<a asp-action="UserList" class="user_list">Список користувачів</a>
