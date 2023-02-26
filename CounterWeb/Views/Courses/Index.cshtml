@@ -7,11 +7,18 @@
 <link rel="stylesheet" type="text/css" href="~/css/taskIndex.css">
 
 <h1>Назва курсів</h1>
-
-<p>
-    <a asp-action="Create">Створити курс</a>
-</p>
-
+@if (User.IsInRole("teacher") || User.IsInRole("admin"))
+{
+    <p>
+        <a asp-action="Create">Створити курс</a>
+    </p>
+}
+else
+{
+    <p>
+        <a asp-action="Join">Доєднатися до курсу</a>
+    </p>
+}
 <div class="product-container">
     @foreach (var item in Model)
     {
@@ -31,37 +38,3 @@
             </div>
     }
 </div>
-
-
-@*<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ZoomLink)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ZoomLink)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a> |
-                    <a asp-action="Details" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a> |
-                    <a asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-*@

@@ -1,0 +1,31 @@
+﻿@model int?
+
+    <meta name="viewport" content="width=device-width" />
+    <title>Приєднатися до курсу</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
+
+    <div class="container mt-5">
+        <h1 class="text-center">Приєднатися до курсу</h1>
+        <form asp-action="Join">
+            <div class="form-group">
+                <label for="invite-request">Введіть запит запрошення</label>
+                <input type="text" class="form-control" id="invite-request" name="id">
+            </div>
+            <button type="submit" class="btn btn-primary">Відправити</button>
+        </form>
+    </div>
+
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('form').submit(function (e) {
+                var inviteRequest = $('#invite-request').val();
+                if (!$.isNumeric(inviteRequest)) {
+                    alert("Введено некоректні дані");
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

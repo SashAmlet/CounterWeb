@@ -4,6 +4,8 @@ using CounterWeb.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Exchange.WebServices.Data;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace CounterWeb.Controllers
 {
@@ -31,9 +33,6 @@ namespace CounterWeb.Controllers
             return _context.Courses != null ?
                           View(courses) :
                           Problem("Entity set 'CounterDbContext.Courses'  is null.");
-            /*return _context.Courses != null ? 
-                          View(await _context.Courses.ToListAsync()) :
-                          Problem("Entity set 'CounterDbContext.Courses'  is null.");*/
         }
 
         // GET: Courses/Details/5
@@ -56,6 +55,7 @@ namespace CounterWeb.Controllers
         }
 
         // GET: Courses/Create
+        [Authorize(Roles = "teacher, admin")]
         public IActionResult Create()
         {
             return View();
@@ -64,6 +64,7 @@ namespace CounterWeb.Controllers
         // POST: Courses/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("CourseId,Name,ZoomLink")] Course course)
@@ -85,12 +86,14 @@ namespace CounterWeb.Controllers
                 _context.Add(course);
                 _context.Add(_userCourse);
                 await _context.SaveChangesAsync();
+                //await userManager.UpdateAsync(currentUser);
                 return RedirectToAction(nameof(Index));
             }
             return View(course);
         }
 
         // GET: Courses/Edit/5
+        [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Courses == null)
@@ -109,6 +112,7 @@ namespace CounterWeb.Controllers
         // POST: Courses/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("CourseId,Name,ZoomLink")] Course course)
@@ -141,7 +145,49 @@ namespace CounterWeb.Controllers
             return View(course);
         }
 
+        // GET: Courses/Join/5
+        public IActionResult Join()
+        {
+            return View();
+        }
+
+        // POST: Courses/Join/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Join(int id)
+        {
+            var course = _context.Courses.Where(b=>b.CourseId == id).FirstOrDefault();
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            var currentUser = await userManager.GetUserAsync(HttpContext.User);
+            var user = _context.Users.Where(b => b.UserId == currentUser.UserId).FirstOrDefault();
+
+            var _userCourse = new UserCourse
+            {
+                CourseId = course.CourseId,
+                Course = course,
+                UserId = user.UserId,
+                User = user
+            };
+            currentUser.UserCourses.Add(_userCourse);
+            course.UserCourses.Add(_userCourse);
+
+            _context.Update(course);
+            _context.Add(_userCourse);
+
+            await _context.SaveChangesAsync();
+            //await userManager.UpdateAsync(currentUser);
+
+            return RedirectToAction(nameof(Index));
+        }
+
         // GET: Courses/Delete/5
+        [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || _context.Courses == null)
@@ -160,6 +206,7 @@ namespace CounterWeb.Controllers
         }
 
         // POST: Courses/Delete/5
+        [Authorize(Roles = "teacher, admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
