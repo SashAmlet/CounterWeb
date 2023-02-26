@@ -10,8 +10,8 @@ namespace CounterWeb.Controllers
     public class RolesController : Controller
     {
         RoleManager<IdentityRole> _roleManager;
-        UserManager<User> _userManager;
-        public RolesController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager)
+        UserManager<UserIdentity> _userManager;
+        public RolesController(RoleManager<IdentityRole> roleManager, UserManager<UserIdentity> userManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;
@@ -22,7 +22,7 @@ namespace CounterWeb.Controllers
         public async Task<IActionResult> Edit(string userId)
         {
             // отримуємо користувача
-            User user = await _userManager.FindByIdAsync(userId);
+            UserIdentity user = await _userManager.FindByIdAsync(userId);
             if (user != null)
             {
                 //список ролей користувача
@@ -44,7 +44,7 @@ namespace CounterWeb.Controllers
         public async Task<IActionResult> Edit(string userId, List<string> roles)
         {
             // отримуємо користувача
-            User user = await _userManager.FindByIdAsync(userId);
+            UserIdentity user = await _userManager.FindByIdAsync(userId);
             if (user != null)
             {
                 // список ролей користувача

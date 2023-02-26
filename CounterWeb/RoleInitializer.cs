@@ -6,7 +6,7 @@ namespace CounterWeb
 {
     public class RoleInitializer
     {
-        public static async Task InitializeAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        public static async Task InitializeAsync(UserManager<UserIdentity> userManager, RoleManager<IdentityRole> roleManager)
         {
             //roleManager.DeleteAsync(await roleManager.FindByNameAsync("user"));
             if (await roleManager.FindByNameAsync("admin") == null)

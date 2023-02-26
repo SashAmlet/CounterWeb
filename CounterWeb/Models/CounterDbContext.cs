@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CounterWeb.Models;
 
@@ -71,7 +72,6 @@ public partial class CounterDbContext : DbContext
 
             entity.ToTable("Language");
 
-            entity.Property(e => e.LanguageId).ValueGeneratedNever();
             entity.Property(e => e.English)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -93,8 +93,6 @@ public partial class CounterDbContext : DbContext
 
             entity.HasIndex(e => e.ThemeId, "UQ__Personal__FBB3E4D8AE710C40").IsUnique();
 
-            entity.Property(e => e.PersonalizationId).ValueGeneratedNever();
-
             entity.HasOne(d => d.Language).WithOne(p => p.Personalization)
                 .HasForeignKey<Personalization>(d => d.LanguageId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -104,6 +102,16 @@ public partial class CounterDbContext : DbContext
                 .HasForeignKey<Personalization>(d => d.ThemeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Personali__Theme__6EF57B66");
+
+            /*entity.HasOne(e => e.Language)
+              .WithOne(p => p.Personalization)
+              .HasForeignKey<Language>(p => p.LanguageId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Theme)
+                  .WithOne(p => p.Personalization)
+                  .HasForeignKey<Theme>(p => p.ThemeId)
+                  .OnDelete(DeleteBehavior.Cascade);*/
         });
 
         modelBuilder.Entity<Task>(entity =>
@@ -145,7 +153,7 @@ public partial class CounterDbContext : DbContext
 
             entity.HasIndex(e => e.PersonalizationId, "UQ__UserInfo__964922B4C701DB01").IsUnique();
 
-            entity.Property(e => e.UserId).ValueGeneratedNever();
+            entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -156,6 +164,11 @@ public partial class CounterDbContext : DbContext
             entity.HasOne(d => d.Personalization).WithOne(p => p.User)
                 .HasForeignKey<User>(d => d.PersonalizationId)
                 .HasConstraintName("FK__UserInfo__Person__06CD04F7");
+
+            /*entity.HasOne(e => e.Personalization)
+              .WithOne(p => p.User)
+              .HasForeignKey<Personalization>(p => p.PersonalizationId)
+              .OnDelete(DeleteBehavior.Cascade);*/
         });
 
         modelBuilder.Entity<UserCourse>(entity =>

@@ -19,7 +19,7 @@ builder.Services.AddDbContext<IdentityContext>(option => option.UseSqlServer(
     builder.Configuration.GetConnectionString("IdentityConnection")
     ));
 builder.Services.AddControllersWithViews();
-builder.Services.AddIdentity<User, IdentityRole>(options =>
+builder.Services.AddIdentity<UserIdentity, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
     options.Password.RequireNonAlphanumeric = false;
@@ -47,7 +47,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var userManager = services.GetRequiredService<UserManager<User>>();
+        var userManager = services.GetRequiredService<UserManager<UserIdentity>>();
         var rolesManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         await RoleInitializer.InitializeAsync(userManager, rolesManager);
     }

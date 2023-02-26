@@ -10,26 +10,30 @@ namespace CounterWeb.Controllers
     public class CoursesController : Controller
     {
         private readonly CounterDbContext _context;
+        private readonly IdentityContext idContext;
+        private readonly UserManager<UserIdentity> userManager;
 
-        public CoursesController(CounterDbContext context)
+        public CoursesController(CounterDbContext context, IdentityContext idContext, UserManager<UserIdentity> userManager)
         {
             _context = context;
+            this.idContext = idContext;
+            this.userManager = userManager;
         }
-        /*public CoursesController(IdentityContext context)
-        {
-            IdentityContext _context1 = context;
-        }*/
 
         // GET: Courses
         public async Task<IActionResult> Index()
         {
-            var courses = from uc in _context.UserCourses
+            var currentUser = await userManager.GetUserAsync(HttpContext.User);
+            var courses = await (from uc in _context.UserCourses
                           join c in _context.Courses on uc.CourseId equals c.CourseId
-                          where uc.UserId == int.Parse(User.FindFirstValue("UserId"))
-                          select c;
-            return _context.Courses != null ? 
-                          View(await _context.Courses.ToListAsync()) :
+                          where uc.UserId == currentUser.UserId
+                          select c).ToListAsync();
+            return _context.Courses != null ?
+                          View(courses) :
                           Problem("Entity set 'CounterDbContext.Courses'  is null.");
+            /*return _context.Courses != null ? 
+                          View(await _context.Courses.ToListAsync()) :
+                          Problem("Entity set 'CounterDbContext.Courses'  is null.");*/
         }
 
         // GET: Courses/Details/5
@@ -66,7 +70,20 @@ namespace CounterWeb.Controllers
         {
             if (ModelState.IsValid)
             {
+                var currentUser = await userManager.GetUserAsync(HttpContext.User);
+                var user = _context.Users.Where(b => b.UserId == currentUser.UserId).FirstOrDefault();
+
+                var _userCourse = new UserCourse();
+                _userCourse.CourseId = course.CourseId;
+                _userCourse.Course = course;
+                _userCourse.UserId = user.UserId;
+                
+                _userCourse.User = user;
+                currentUser.UserCourses.Add(_userCourse);
+                course.UserCourses.Add(_userCourse);
+
                 _context.Add(course);
+                _context.Add(_userCourse);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
