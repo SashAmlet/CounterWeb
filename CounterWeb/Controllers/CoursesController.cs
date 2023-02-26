@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CounterWeb.Models;
-using CounterWeb.Controllers;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Exchange.WebServices.Data;
 
 namespace CounterWeb.Controllers
 {
@@ -18,11 +15,19 @@ namespace CounterWeb.Controllers
         {
             _context = context;
         }
+        /*public CoursesController(IdentityContext context)
+        {
+            IdentityContext _context1 = context;
+        }*/
 
         // GET: Courses
         public async Task<IActionResult> Index()
         {
-              return _context.Courses != null ? 
+            var courses = from uc in _context.UserCourses
+                          join c in _context.Courses on uc.CourseId equals c.CourseId
+                          where uc.UserId == int.Parse(User.FindFirstValue("UserId"))
+                          select c;
+            return _context.Courses != null ? 
                           View(await _context.Courses.ToListAsync()) :
                           Problem("Entity set 'CounterDbContext.Courses'  is null.");
         }
