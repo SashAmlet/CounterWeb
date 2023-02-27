@@ -7,9 +7,12 @@ ViewData["Title"] = "Завдання в курсі";
 <link rel="stylesheet" type="text/css" href="~/css/taskIndex.css">
 
 <h1>Завдання в курсі @ViewBag.Name</h1>
-<p>
-    @Html.ActionLink("Додати завдання", "Create", new{courseId = @ViewBag.Id})
-</p>
+@if (User.IsInRole("teacher") || User.IsInRole("admin"))
+{
+    <p>
+        @Html.ActionLink("Додати завдання", "Create", new{courseId = @ViewBag.Id})
+    </p>
+}
 <div class="product-container">
     @foreach (var item in Model)
     {
@@ -18,15 +21,21 @@ ViewData["Title"] = "Завдання в курсі";
           <p>@Html.DisplayFor(modelItem => item.Course.Name)</p>
           <p>Оцінка: @Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)</p>
           <div class="actions">
-            <a class="btn execute" asp-action="EditStud" asp-route-id="@item.TaskId">Виконати завдання</a>
-            <a class="btn details" asp-action="Details" asp-route-id="@item.TaskId">Переглянути завдання</a>
-            <div class="actions-dropdown">
-            <button class="actions-dropdown-button">•••</button>
-              <div class="actions-dropdown-content">
-                <a class="btn edit" asp-action="Edit" asp-route-id="@item.TaskId">Редагувати завдання</a>
-                <a class="btn delete" asp-action="Delete" asp-route-id="@item.TaskId">Видалити завдання</a>
-              </div>
-            </div>
+              @if(User.IsInRole("student") || User.IsInRole("admin"))
+              {
+                <a class="btn execute" asp-action="Complete" asp-route-id="@item.TaskId">Виконати завдання</a>                    
+              }
+              @if (User.IsInRole("teacher") || User.IsInRole("admin"))
+              {
+                  <a class="btn details" asp-action="Details" asp-route-id="@item.TaskId">Переглянути відповіді</a>
+                  <div class="actions-dropdown">
+                      <button class="actions-dropdown-button">•••</button>
+                      <div class="actions-dropdown-content">
+                          <a class="btn edit" asp-action="Edit" asp-route-id="@item.TaskId">Редагувати завдання</a>
+                          <a class="btn delete" asp-action="Delete" asp-route-id="@item.TaskId">Видалити завдання</a>
+                      </div>
+                  </div>
+              }
           </div>
         </div>
     }

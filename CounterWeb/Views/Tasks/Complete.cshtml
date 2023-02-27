@@ -14,9 +14,13 @@
             <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
             </h4>
             <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">
-                @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
-                    {
-                        @Model.CompletedTasks.FirstOrDefault().Grade
+                    @{
+                        UserIdentity currentUser = await ViewBag.userManager.GetUserAsync(User);
+                        @if (Model.CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId) != null)
+                        {
+                            @Model.CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).FirstOrDefault().Grade;
+                        }
+                        
                     }
                     / @Model.MaxGrade балів</h3>
                 <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
@@ -37,7 +41,7 @@
       </div>
     </section>
     @*Основна частина*@
-    <form asp-action="EditStud" style="margin-bottom:70px">
+    <form asp-action="Complete" style="margin-bottom:70px">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <input type="hidden" asp-for="TaskId" />
             <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
@@ -49,13 +53,14 @@
                             </span>
                         </h1>
                         <div class="form-group1">
-                            @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                            @if (Model.CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId) != null)
                             {
-                                @Html.TextAreaFor(m => m.CompletedTasks.ToList()[0].Solution, new { @class = "form-control", placeholder = "Рішення для завдання", style = "height: 200px" }) 
-                                <span asp-validation-for="CompletedTasks.ToList()[0].Solution" class="text-danger1"></span>
-                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].CompletedTaskId"/>
-                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].Grade"/>
-                                <input type="hidden" asp-for="CompletedTasks.ToList()[0].TaskId"/>
+                                @Html.TextAreaFor(m => m.CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].Solution, new { @class = "form-control", placeholder = "Рішення для завдання", style = "height: 200px" }) 
+                                <span asp-validation-for="CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].Solution" class="text-danger1"></span>
+                                <input type="hidden" asp-for="CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].CompletedTaskId"/>
+                                <input type="hidden" asp-for="CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].Grade"/>
+                                <input type="hidden" asp-for="CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].TaskId"/>
+                                <input type="hidden" asp-for="CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).ToList()[0].UserCourseId"/>
                             }
                         </div>
                     </div>

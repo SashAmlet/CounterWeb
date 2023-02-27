@@ -1,0 +1,13 @@
+﻿@model IEnumerable<CounterWeb.Models.CompletedTask>
+
+    <title>Відповіді</title>
+    
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Готові відповіді</h1>
+            <ul class="list-group">
+                @foreach(var p in Model)
+                {
+                    <li class="list-group-item list-group-item-action">@p.</li>            
+                }
+            </ul>
+    </div>
