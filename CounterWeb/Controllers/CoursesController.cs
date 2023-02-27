@@ -144,6 +144,20 @@ namespace CounterWeb.Controllers
             }
             return View(course);
         }
+        public async Task<IActionResult> Show(int? id)
+        {
+            if (id == null || _context.Courses == null)
+            {
+                return NotFound();
+            }
+
+            var partList = await _context.UserCourses.Where(b=>b.CourseId == id).Select(b=>b.User).ToListAsync();
+            if (partList == null)
+            {
+                return NotFound();
+            }
+            return View(partList);
+        }
 
         // GET: Courses/Join/5
         public IActionResult Join()

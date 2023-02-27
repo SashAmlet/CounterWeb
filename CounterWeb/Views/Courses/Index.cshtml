@@ -30,8 +30,13 @@ else
                     <div class="actions-dropdown">
                         <button class="actions-dropdown-button">•••</button>
                         <div class="actions-dropdown-content">
-                            <a class="btn edit" asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a>
-                            <a class="btn delete" asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
+                            @if (User.IsInRole("teacher") || User.IsInRole("admin"))
+                            {
+                                <a class="btn edit" asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a>
+                                <a class="btn delete" asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
+                            }
+                            <a class="btn edit" asp-action="Show" asp-route-id="@item.CourseId">Показати учасників курсу</a>
+
                         </div>
                     </div>
                 </div>
