@@ -1,4 +1,4 @@
-@model CounterWeb.Models.Task
+@model CounterWeb.Models.CompletedTask
 
 @{
     ViewData["Title"] = "Details";
@@ -6,20 +6,24 @@
 <div style="margin-bottom:70px">
     <section class="u-clearfix u-section-1" id="sec-9532">
       <div class="u-clearfix u-sheet u-sheet-1">
-        <div>
+@*        <div>
             <a asp-action="Edit" asp-route-id="@Model?.TaskId" style="position:static">Редагувати завдання</a>
-        </div>
+        </div>*@
+        @{
+            UserCourse userCourse = ViewBag.usercourse;
+            CounterWeb.Models.Task task = ViewBag.task;
+        }
         <div class="u-container-style u-group u-shape-rectangle u-group-1">
           <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-icon-1"><img src="/img/taskico.png" alt=""></span>
-            <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@Model.Name</h1>
-            <h4 class="u-text u-text-default u-text-2">@Model.Course.Name<br>
+            <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@task.Name</h1>
+            <h4 class="u-text u-text-default u-text-2">@userCourse.Course.Name<br>
             </h4>
                     <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">
-                        @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                        @if (Model != null)
                         {
-                            @Model.CompletedTasks.FirstOrDefault().Grade
-                        }
-                        / @Model.MaxGrade балів</h3>
+                            @Model.Grade;
+                        } 
+                        / @task.MaxGrade балів</h3>
                     <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
           </div>
         </div>
@@ -32,7 +36,7 @@
             <span style="line-height: 2.0;">Завдання:</span>
           </h1>
           <p style="text-align: left;">
-            <span style="line-height: 2.0;">@Model.Description</span>
+            <span style="line-height: 2.0;">@task.Description</span>
           </p>
         </div>
       </div>
@@ -45,15 +49,15 @@
           </h1>
           <p style="text-align: left;">
             <span style="line-height: 2.0;">
-                @if (Model.CompletedTasks != null && Model.CompletedTasks.Any())
+                @if (Model != null)
                         {
-                @Model.CompletedTasks.FirstOrDefault().Solution
+                @Model.Solution
                         }</span>
           </p>
         </div>
       </div>
     </section>
     <div>
-        <a asp-action="Index" asp-route-id="@Model?.CourseId">Back to List</a>
+        <a asp-action="Index" asp-route-id="@userCourse?.CourseId">Back to List</a>
     </div>
 </div>

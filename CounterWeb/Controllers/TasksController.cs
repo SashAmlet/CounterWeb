@@ -10,6 +10,7 @@ using Task = CounterWeb.Models.Task;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Exchange.WebServices.Data;
 
 namespace CounterWeb.Controllers
 {
@@ -38,22 +39,28 @@ namespace CounterWeb.Controllers
         }
 
         // GET: Tasks/Details/5
-        public async Task<IActionResult> Details(int? id)// відповідь конкретного чела
+        public async Task<IActionResult> Details(int? id)// userCourseId
         {
             if (id == null || _context.Tasks == null)
             {
                 return NotFound();
             }
 
-            var task = await _context.Tasks
-                .Include(t => t.Course).Include(b => b.CompletedTasks)
-                .FirstOrDefaultAsync(m => m.TaskId == id);
-            if (task == null)
+            var ctask = await _context.CompletedTasks.Where(b => b.UserCourseId == id).FirstOrDefaultAsync();
+
+            if (ctask == null)
             {
                 return NotFound();
             }
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == ctask.TaskId));
+            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == id).FirstOrDefault();
 
-            return View(task);
+            ViewBag.usercourse = usercourse;
+            ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
+            //ViewBag.context = _context;
+
+
+            return View(ctask);
         }
 
         // GET: Tasks/Create
@@ -84,7 +91,6 @@ namespace CounterWeb.Controllers
                 _context.Update(course);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index", "Tasks", new {id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
-                //return RedirectToAction(nameof(Index));
             }
             //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             //return View(task);
@@ -167,6 +173,7 @@ namespace CounterWeb.Controllers
 
             var task = await _context.Tasks.Include(b => b.CompletedTasks)
                 .FirstOrDefaultAsync(m => m.TaskId == id);
+
             if (task == null)
             {
                 return NotFound();
@@ -176,12 +183,14 @@ namespace CounterWeb.Controllers
 
             if (task.CompletedTasks.Where(b=>b.UserCourseId == currentUser.UserId).FirstOrDefault() == null)
             {
+                var usercourse = await _context.UserCourses.Where(b => b.UserId == currentUser.UserId).Where(b => b.CourseId == task.CourseId).FirstOrDefaultAsync();
                 var ctask = new CompletedTask
                 {
                     Task = task,
                     TaskId = task.TaskId,
-                    UserCourseId = currentUser.UserId
+                    UserCourseId = usercourse.UserCourseId
                 };
+                ViewBag.usercourse = usercourse;
                 task.CompletedTasks.Add(ctask);
             }
 
@@ -209,13 +218,15 @@ namespace CounterWeb.Controllers
                 try
                 {
                     var currentUser = await userManager.GetUserAsync(User);
-                    completedTasks.ToList()[0].Task = task;
+                    var usercourse = await _context.UserCourses.Where(b => b.UserId == currentUser.UserId).Where(b => b.CourseId == task.CourseId).FirstOrDefaultAsync();
+                    var ctask = completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault();
+                    ctask.Task = task;
                     task.CompletedTasks = completedTasks;
                     _context.Update(task);
-                    if(_context.CompletedTasks.Where(b => b.UserCourseId == currentUser.UserId).FirstOrDefault() == null)
-                        _context.Add(completedTasks.Where(b => b.UserCourseId == currentUser.UserId).FirstOrDefault());
+                    if(_context.CompletedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault() == null)
+                        _context.Add(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault());
                     else
-                        _context.Update(completedTasks.Where(b => b.UserCourseId == currentUser.UserId).FirstOrDefault());
+                        _context.Update(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault());
 
                     await _context.SaveChangesAsync();
                 }
@@ -235,6 +246,40 @@ namespace CounterWeb.Controllers
             }
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             return View(task);
+        }
+        // GET: Tasks/CompletedList/5
+        [Authorize(Roles = "teacher, admin")]
+        public async Task<IActionResult> CompletedList(int? id)//taskId
+        {
+            if (id == null || _context.Tasks == null)
+            {
+                return NotFound();
+            }
+
+
+
+            var ctaskList = await _context.CompletedTasks.Where(b=>b.TaskId == id).ToListAsync();
+
+            if (ctaskList == null)
+            {
+                return NotFound();
+            }
+            var userCourseList =  (
+                from completedTask in ctaskList
+                join userCourse in _context.UserCourses on completedTask.UserCourseId equals userCourse.UserCourseId
+                select userCourse
+            ).ToList();
+
+            var userList = (
+                from userCourse in userCourseList
+                join user in _context.Users on userCourse.UserId equals user.UserId
+                select user
+            ).ToList();
+
+            //var userList = await _context.Users.Where(u => usercourseList.Any(uc => uc.UserId == u.UserId)).ToListAsync();
+            ViewBag.context = _context;
+
+            return View(userCourseList);
         }
         // GET: Tasks/Delete/5
         [Authorize(Roles = "teacher, admin")]
