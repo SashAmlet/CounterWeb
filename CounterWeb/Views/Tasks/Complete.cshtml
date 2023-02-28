@@ -15,7 +15,6 @@
             </h4>
             <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">
                     @{
-                        //UserIdentity currentUser = await ViewBag.userManager.GetUserAsync(User);
                         UserCourse userCourse = ViewBag.usercourse;
                         @if (Model.CompletedTasks.Where(b=>b.UserCourseId == userCourse.UserCourseId) != null)
                         {

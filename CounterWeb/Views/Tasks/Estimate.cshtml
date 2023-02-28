@@ -1,5 +1,74 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model CounterWeb.Models.CompletedTask
+
 @{
+    ViewData["Title"] = "Details";
 }
+<form asp-action="Estimate" style="margin-bottom:70px">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="CompletedTaskId" />
+    <input type="hidden" asp-for="Solution" />
+    <input type="hidden" asp-for="UserCourseId" />
+    <input type="hidden" asp-for="TaskId" />
+
+<div style="margin-bottom:70px">
+    <section class="u-clearfix u-section-1" id="sec-9532">
+      <div class="u-clearfix u-sheet u-sheet-1">
+        @{
+            UserCourse userCourse = ViewBag.usercourse;
+            CounterWeb.Models.Task task = ViewBag.task;
+        }
+        <div class="u-container-style u-group u-shape-rectangle u-group-1">
+          <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-icon-1"><img src="/img/taskico.png" alt=""></span>
+            <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@task.Name</h1>
+            <h4 class="u-text u-text-default u-text-2">@userCourse.Course.Name<br>
+            </h4>
+                    <h3 class="u-text u-text-default u-text-3" style="display:flex; margin-right:auto">
+                        @if (Model != null)
+                        {
+                            <input asp-for="@Model.Grade" class="form-control" style="
+                                display:inline-block;
+                                font-size: 1rem;
+                                width: fit-content;"/>
+                        } 
+                        / @task.MaxGrade балів</h3>
+                    <div class="u-border-3 u-border-palette-1-dark-1 u-line u-line-horizontal u-line-1"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
+      <div class="u-clearfix u-sheet u-sheet-1">
+        <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
+          <h1 style="text-align: left;">
+            <span style="line-height: 2.0;">Завдання:</span>
+          </h1>
+          <p style="text-align: left;">
+            <span style="line-height: 2.0;">@task.Description</span>
+          </p>
+        </div>
+      </div>
+    </section>
+    <section class="u-align-left u-clearfix u-section-2" id="sec-ed7e">
+      <div class="u-clearfix u-sheet u-sheet-1">
+        <div class="fr-view u-clearfix u-rich-text u-text u-text-1">
+          <h1 style="text-align: left;">
+            <span style="line-height: 2.0;">Відповідь:</span>
+          </h1>
+          <p style="text-align: left;">
+            <span style="line-height: 2.0;">
+                @if (Model != null)
+                        {
+                @Model.Solution
+                        }</span>
+          </p>
+        </div>
+      </div>
+    </section>
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+    <div>
+        <a asp-action="Index" asp-route-id="@userCourse?.CourseId">Back to List</a>
+    </div>
+</div>
+</form>

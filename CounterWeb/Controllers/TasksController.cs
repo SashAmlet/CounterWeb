@@ -25,7 +25,7 @@ namespace CounterWeb.Controllers
             this.userManager = userManager;
         }
 
-        // GET: Tasks
+        // GET: Tasks/INDEX
         public async Task<IActionResult> Index(int? id, string? name)
         {
             if (id == null)
@@ -38,7 +38,8 @@ namespace CounterWeb.Controllers
             return View(await tasksByCourses.ToListAsync());
         }
 
-        // GET: Tasks/Details/5
+        // GET: Tasks/DETAILS
+        [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Details(int? id)// userCourseId
         {
             if (id == null || _context.Tasks == null)
@@ -63,19 +64,16 @@ namespace CounterWeb.Controllers
             return View(ctask);
         }
 
-        // GET: Tasks/Create
+        // GET: Tasks/CREATE
         [Authorize(Roles = "teacher, admin")]
         public IActionResult Create(int courseId)
         {
             ViewBag.CourseId = courseId;
-            ViewBag.CourseName = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name; 
-            //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name");
+            ViewBag.CourseName = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name;
             return View();
         }
 
-        // POST: Tasks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Tasks/CREATE
         [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -90,14 +88,62 @@ namespace CounterWeb.Controllers
                 _context.Add(task);
                 _context.Update(course);
                 await _context.SaveChangesAsync();
-                return RedirectToAction("Index", "Tasks", new {id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
+                return RedirectToAction("Index", "Tasks", new { id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
             }
             //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             //return View(task);
             return RedirectToAction("Index", "Tasks", new { id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
         }
 
-        // GET: Tasks/Edit/5
+        // GET: Tasks/ESTIMATE
+        [Authorize(Roles = "teacher, admin")]
+        public async Task<IActionResult> Estimate(int? id)// userCourseId
+        {
+            if (id == null || _context.Tasks == null)
+            {
+                return NotFound();
+            }
+
+            var ctask = await _context.CompletedTasks.Where(b => b.UserCourseId == id).FirstOrDefaultAsync();
+
+            if (ctask == null)
+            {
+                return NotFound();
+            }
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == ctask.TaskId));
+            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == id).FirstOrDefault();
+
+            ViewBag.usercourse = usercourse;
+            ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
+            //ViewBag.context = _context;
+
+
+            return View(ctask);
+        }
+        [Authorize(Roles = "teacher, admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+
+        // POST: Tasks/ESTIMATE
+        public async Task<IActionResult> Estimate(int taskId, [Bind("CompletedTaskId, TaskId,Grade,Solution,UserCourseId")] CompletedTask task)
+        {
+
+            if (ModelState.IsValid)
+            {
+                /*var course = _context.Courses.Where(_c => _c.CourseId == courseId).FirstOrDefault();
+                course.Tasks.Add(task);
+                task.Course = course;
+                _context.Add(task);*/
+                _context.Update(task);
+                await _context.SaveChangesAsync();
+                //return RedirectToAction("Index", "Tasks", new {id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
+            }
+            //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
+            //return View(task);
+            return RedirectToAction("CompletedList", new { id = taskId});
+        }
+
+        // GET: Tasks/EDIT
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -122,9 +168,7 @@ namespace CounterWeb.Controllers
             return View(task);
         }
 
-        // POST: Tasks/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Tasks/EDIT
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "teacher, admin")]
@@ -162,7 +206,8 @@ namespace CounterWeb.Controllers
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             return View(task);
         }
-        // GET: Tasks/Complete/5
+        
+        // GET: Tasks/COMPLETE
         [Authorize(Roles = "student, admin")]
         public async Task<IActionResult> Complete(int? id)
         {
@@ -200,9 +245,7 @@ namespace CounterWeb.Controllers
             return View(task);
         }
 
-        // POST: Tasks/Complete/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Tasks/COMPLETE
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "student, admin")]
@@ -223,10 +266,10 @@ namespace CounterWeb.Controllers
                     ctask.Task = task;
                     task.CompletedTasks = completedTasks;
                     _context.Update(task);
-                    if(_context.CompletedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault() == null)
-                        _context.Add(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault());
+                    if(_context.CompletedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).Where(b=>b.TaskId == ctask.TaskId).FirstOrDefault() == null)
+                        _context.Add(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).Where(b => b.TaskId == ctask.TaskId).FirstOrDefault());
                     else
-                        _context.Update(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).FirstOrDefault());
+                        _context.Update(completedTasks.Where(b => b.UserCourseId == usercourse.UserCourseId).Where(b => b.TaskId == ctask.TaskId).FirstOrDefault());
 
                     await _context.SaveChangesAsync();
                 }
@@ -247,7 +290,8 @@ namespace CounterWeb.Controllers
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             return View(task);
         }
-        // GET: Tasks/CompletedList/5
+        
+        // GET: Tasks/COMPLETEDLIST
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> CompletedList(int? id)//taskId
         {
@@ -255,8 +299,6 @@ namespace CounterWeb.Controllers
             {
                 return NotFound();
             }
-
-
 
             var ctaskList = await _context.CompletedTasks.Where(b=>b.TaskId == id).ToListAsync();
 
@@ -276,12 +318,12 @@ namespace CounterWeb.Controllers
                 select user
             ).ToList();
 
-            //var userList = await _context.Users.Where(u => usercourseList.Any(uc => uc.UserId == u.UserId)).ToListAsync();
             ViewBag.context = _context;
 
             return View(userCourseList);
         }
-        // GET: Tasks/Delete/5
+
+        // GET: Tasks/DELETE
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -301,7 +343,7 @@ namespace CounterWeb.Controllers
             return View(task);
         }
 
-        // POST: Tasks/Delete/5
+        // POST: Tasks/DELETE
         [HttpPost, ActionName("Delete")]
         [Authorize(Roles = "teacher, admin")]
         [ValidateAntiForgeryToken]

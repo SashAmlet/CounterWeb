@@ -9,9 +9,8 @@
             <ul class="list-group">
                 @foreach(var p in Model)
                 {
-
-            User user = context.Users.Where(b => b.UserId == p.UserId).FirstOrDefault();
-            <a asp-action="Details" asp-route-id="@p.UserCourseId" class="list-group-item list-group-item-action">@user.FirstName  @user.LastName</a>            
+                    User user = context.Users.Where(b => b.UserId == p.UserId).FirstOrDefault();
+                    <a asp-action="Details" asp-route-id="@p.UserCourseId" class="list-group-item list-group-item-action">@user.FirstName  @user.LastName</a>            
                 }
             </ul>
     </div>
