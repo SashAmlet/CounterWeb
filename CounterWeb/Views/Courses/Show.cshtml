@@ -1,11 +1,18 @@
-﻿@model IEnumerable<CounterWeb.Models.User>
+﻿    @model Tuple< List<CounterWeb.Models.User>, List<CounterWeb.Models.User> >
 
     <title>Викладачі</title>
     
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Учасники курсу</h1>
+        <h2 class="text-center mb-4">Вчителі</h2>
             <ul class="list-group">
-                @foreach(var p in Model)
+                @foreach(var p in Model.Item1)
+                {
+                    <li class="list-group-item list-group-item-action">@p.FirstName  @p.LastName</li>            
+                }
+            </ul>
+        <h2 class="text-center mb-4">Учні</h2>
+            <ul class="list-group">
+                @foreach(var p in Model.Item2)
                 {
                     <li class="list-group-item list-group-item-action">@p.FirstName  @p.LastName</li>            
                 }

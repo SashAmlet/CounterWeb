@@ -31,8 +31,11 @@ namespace CounterWeb.Controllers
             if (id == null)
                 return RedirectToAction("Courses", "Index");
             // Знаходження завдань за курсом
+            var currentUser = await userManager.GetUserAsync(User);
             ViewBag.Id = id;
             ViewBag.Name = name;
+            var userCourse = await _context.UserCourses.Where(b => b.CourseId == id).Where(b => b.UserId == currentUser.UserId).FirstOrDefaultAsync();
+            ViewBag.userCoursseId = userCourse?.UserCourseId;
             // Load all Tasks and all related CTasks.
             var tasksByCourses = _context.Tasks.Where(b => b.CourseId == id).Include(b => b.Course).Include(b => b.CompletedTasks);
             return View(await tasksByCourses.ToListAsync());
@@ -40,21 +43,21 @@ namespace CounterWeb.Controllers
 
         // GET: Tasks/DETAILS
         [Authorize(Roles = "teacher, admin")]
-        public async Task<IActionResult> Details(int? id)// userCourseId
+        public async Task<IActionResult> Details(int? userCourseId, int? taskId)// userCourseId
         {
-            if (id == null || _context.Tasks == null)
+            if (userCourseId == null || _context.Tasks == null)
             {
                 return NotFound();
             }
 
-            var ctask = await _context.CompletedTasks.Where(b => b.UserCourseId == id).FirstOrDefaultAsync();
+            var ctask = await _context.CompletedTasks.Where(b => b.UserCourseId == userCourseId).Where(b=>b.TaskId == taskId).FirstOrDefaultAsync();
 
             if (ctask == null)
             {
                 return NotFound();
             }
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == ctask.TaskId));
-            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == id).FirstOrDefault();
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == taskId));
+            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == userCourseId).FirstOrDefault();
 
             ViewBag.usercourse = usercourse;
             ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
@@ -97,21 +100,21 @@ namespace CounterWeb.Controllers
 
         // GET: Tasks/ESTIMATE
         [Authorize(Roles = "teacher, admin")]
-        public async Task<IActionResult> Estimate(int? id)// userCourseId
+        public async Task<IActionResult> Estimate(int? UserCourseId, int? TaskId)// userCourseId
         {
-            if (id == null || _context.Tasks == null)
+            if (UserCourseId == null || _context.Tasks == null)
             {
                 return NotFound();
             }
 
-            var ctask = await _context.CompletedTasks.Where(b => b.UserCourseId == id).FirstOrDefaultAsync();
+            var ctask = await _context.CompletedTasks.Where(b=>b.TaskId == TaskId).Where(b => b.UserCourseId == UserCourseId).FirstOrDefaultAsync();
 
             if (ctask == null)
             {
                 return NotFound();
             }
             var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == ctask.TaskId));
-            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == id).FirstOrDefault();
+            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == UserCourseId).FirstOrDefault();
 
             ViewBag.usercourse = usercourse;
             ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
@@ -318,8 +321,8 @@ namespace CounterWeb.Controllers
                 select user
             ).ToList();
 
-            ViewBag.context = _context;
-
+            ViewBag.userList = userList;
+            ViewBag.ctaskList = ctaskList;
             return View(userCourseList);
         }
 

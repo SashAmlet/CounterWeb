@@ -36,7 +36,7 @@ namespace CounterWeb.Controllers
                           Problem("Entity set 'CounterDbContext.Courses'  is null.");
         }
 
-        // GET: Courses/Details/5
+        // GET: Courses/DETAILS
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null || _context.Courses == null)
@@ -55,16 +55,14 @@ namespace CounterWeb.Controllers
             //return View(course);
         }
 
-        // GET: Courses/Create
+        // GET: Courses/CREATE
         [Authorize(Roles = "teacher, admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Courses/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Courses/CREATE
         [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -93,7 +91,7 @@ namespace CounterWeb.Controllers
             return View(course);
         }
 
-        // GET: Courses/Edit/5
+        // GET: Courses/EDIT
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -110,9 +108,7 @@ namespace CounterWeb.Controllers
             return View(course);
         }
 
-        // POST: Courses/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Courses/EDIT
         [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -145,6 +141,8 @@ namespace CounterWeb.Controllers
             }
             return View(course);
         }
+
+        // GET: Courses/SHOW
         public async Task<IActionResult> Show(int? id)
         {
             if (id == null || _context.Courses == null)
@@ -152,23 +150,29 @@ namespace CounterWeb.Controllers
                 return NotFound();
             }
 
-            var partList = await _context.UserCourses.Where(b=>b.CourseId == id).Select(b=>b.User).ToListAsync();
-            if (partList == null)
+            var teachers = await userManager.GetUsersInRoleAsync("teacher");
+            var students = await userManager.GetUsersInRoleAsync("student");
+
+            var teacherIds = teachers.Select(t => t.UserId).ToList();
+            var studentIds = students.Select(t => t.UserId).ToList();
+
+            var teachList = await _context.UserCourses.Where(b => teacherIds.Contains(b.UserId.Value)).Select(b => b.User).ToListAsync();
+            var studList = await _context.UserCourses.Where(b => studentIds.Contains(b.UserId.Value)).Select(b => b.User).ToListAsync();
+
+            if (teachList == null && studList == null)
             {
                 return NotFound();
             }
-            return View(partList);
+            return View(Tuple.Create(teachList, studList));
         }
 
-        // GET: Courses/Join/5
+        // GET: Courses/JOIN
         public IActionResult Join()
         {
             return View();
         }
 
-        // POST: Courses/Join/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Courses/JOIN
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Join(int id)
@@ -201,7 +205,7 @@ namespace CounterWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Courses/Delete/5
+        // GET: Courses/DELETE
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -220,7 +224,7 @@ namespace CounterWeb.Controllers
             return View(course);
         }
 
-        // POST: Courses/Delete/5
+        // POST: Courses/DELETE
         [Authorize(Roles = "teacher, admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]

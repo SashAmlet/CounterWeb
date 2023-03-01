@@ -1,7 +1,9 @@
 ﻿@model IEnumerable<CounterWeb.Models.Task>
 
 @{
-ViewData["Title"] = "Завдання в курсі";
+    ViewData["Title"] = "Завдання в курсі";
+
+    int userCoursseId = ViewBag.userCoursseId;
 }
 
 <link rel="stylesheet" type="text/css" href="~/css/taskIndex.css">
@@ -19,14 +21,15 @@ ViewData["Title"] = "Завдання в курсі";
         <div class="product">
           <h2>@Html.DisplayFor(modelItem => item.Name)</h2>
           <p>@Html.DisplayFor(modelItem => item.Course.Name)</p>
-          <p>Оцінка: @Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)</p>
           <div class="actions">
               @if(User.IsInRole("student") || User.IsInRole("admin"))
               {
+                <p>Оцінка: @Html.DisplayFor(modelItem => item.CompletedTasks.Where(b=>b.UserCourseId == userCoursseId).FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)</p>
                 <a class="btn execute" asp-action="Complete" asp-route-id="@item.TaskId">Виконати завдання</a>                    
               }
               @if (User.IsInRole("teacher") || User.IsInRole("admin"))
-              {
+              { 
+                  <p>Кількість зданих робіт: @*@Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)*@</p>
                   <a class="btn details" asp-action="CompletedList" asp-route-id="@item.TaskId">Переглянути відповіді</a>
                   <div class="actions-dropdown">
                       <button class="actions-dropdown-button">•••</button>

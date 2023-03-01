@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Details";
+    UserCourse userCourse = ViewBag.usercourse;
+    CounterWeb.Models.Task task = ViewBag.task;
 }
 <div style="margin-bottom:70px">
     <section class="u-clearfix u-section-1" id="sec-9532">
@@ -9,13 +11,9 @@
           @if(User.IsInRole("teacher") || User.IsInRole("admin"))
           {
         <div>
-            <a asp-action="Estimate" asp-route-id="@Model?.UserCourseId" style="position:static">Оцінити завдання</a>
+            <a asp-action="Estimate" asp-route-UserCourseId="@Model?.UserCourseId" asp-route-TaskId="@Model?.TaskId" style="position:static">Оцінити завдання</a>
         </div>
           }
-        @{
-            UserCourse userCourse = ViewBag.usercourse;
-            CounterWeb.Models.Task task = ViewBag.task;
-        }
         <div class="u-container-style u-group u-shape-rectangle u-group-1">
           <div class="u-container-layout u-container-layout-1"><span class="u-file-icon u-icon u-icon-1"><img src="/img/taskico.png" alt=""></span>
             <h1 class="u-text u-text-default u-text-palette-1-dark-1 u-text-1">@task.Name</h1>
