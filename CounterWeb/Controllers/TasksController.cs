@@ -30,6 +30,12 @@ namespace CounterWeb.Controllers
         {
             if (id == null)
                 return RedirectToAction("Courses", "Index");
+
+            var students = await userManager.GetUsersInRoleAsync("student");
+            var studentIds = students.Select(t => t.UserId).ToList();
+            var studList = await _context.UserCourses.Where(b => studentIds.Contains(b.UserId.Value)).Where(b => b.CourseId == id).Select(b => b.User).ToListAsync();
+            ViewBag.studCount = studList.Count;
+
             // Знаходження завдань за курсом
             var currentUser = await userManager.GetUserAsync(User);
             ViewBag.Id = id;
@@ -293,24 +299,22 @@ namespace CounterWeb.Controllers
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
             return View(task);
         }
-        
-        // GET: Tasks/COMPLETEDLIST
-        [Authorize(Roles = "teacher, admin")]
-        public async Task<IActionResult> CompletedList(int? id)//taskId
+
+		public static Tuple<int, int> ReturnNumberOfWorks(Tuple<int, int> tuple) => tuple;
+
+		// GET: Tasks/COMPLETEDLIST
+		[Authorize(Roles = "teacher, admin")]
+        public async Task<IActionResult> CompletedList(int? id)
         {
             if (id == null || _context.Tasks == null)
             {
                 return NotFound();
             }
 
-
+            // Усі готові роботи
             var ctaskList = await _context.CompletedTasks.Where(b=>b.TaskId == id).ToListAsync();
 
-            if (ctaskList == null)
-            {
-                return NotFound();
-            }
-
+            // усі UserCourse, в яких UserId == ctask.UserId
             var userCourseList =  (
                 from completedTask in ctaskList
                 join userCourse in _context.UserCourses on completedTask.UserCourseId equals userCourse.UserCourseId
@@ -322,6 +326,7 @@ namespace CounterWeb.Controllers
                 join user in _context.Users on userCourse.UserId equals user.UserId
                 select user
             ).ToList();
+            var smartIds = userList.Select(b => b.UserId).ToList();
 
 			// дістаю курс в якому зараз працюю
 			var course = await (
@@ -331,7 +336,7 @@ namespace CounterWeb.Controllers
             	select c
             ).FirstOrDefaultAsync();
 
-            // дістаю усі UserCourses для мого курсу
+            // дістаю усі UserCourses для мого курсу (включая вчителів)
             var usercourses = await _context.UserCourses.Where(b => b.CourseId == course.CourseId).ToListAsync();
 			// дістаю усі UserId з тих UserCourses, по факту це і є усі id-шники юзерів у моєму курсі
 			var userIds = usercourses.Select(c => c.UserId).ToList();
@@ -343,15 +348,12 @@ namespace CounterWeb.Controllers
             var foolIds =
                 (
                 from studId in studentIds
-                where !userIds.Contains(studId)
+                where !smartIds.Contains(studId)
                 select studId
                 ).ToList(); // усі UserId, що не зробили домашку
                
 
             var foolList = _context.Users.Where(b=> foolIds.Contains(b.UserId)).ToList();
-
-
-
 
             ViewBag.userList = userList;
             ViewBag.ctaskList = ctaskList;

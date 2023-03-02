@@ -236,17 +236,18 @@ namespace CounterWeb.Controllers
             {
                 return Problem("Entity set 'CounterDbContext.Courses'  is null.");
             }
-            var course = await _context.Courses.Include(b => b.Tasks)
-                .FirstOrDefaultAsync(m => m.CourseId == id);
+            var course = await _context.Courses.Include(b=>b.UserCourses).Include(b => b.Tasks).ThenInclude(c=>c.CompletedTasks)
+                .FirstOrDefaultAsync(b => b.CourseId == id);
             if (course != null)
             {
                 foreach(var task in course.Tasks)
                 {
-                    var compTasks = _context.CompletedTasks.Where(b => b.TaskId == task.TaskId).ToList();
-                    foreach (var ct in compTasks)
+                    foreach (var ct in task.CompletedTasks)
                         _context.CompletedTasks.Remove(ct);
                     _context.Tasks.Remove(task);
                 }
+                foreach(var usercourse in course.UserCourses)
+                    _context.Remove(usercourse);
                 _context.Courses.Remove(course);
             }
             

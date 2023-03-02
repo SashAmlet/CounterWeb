@@ -28,9 +28,9 @@
                 <a class="btn execute" asp-action="Complete" asp-route-id="@item.TaskId">Виконати завдання</a>                    
               }
               @if (User.IsInRole("teacher") || User.IsInRole("admin"))
-              { 
-                  <p>Кількість зданих робіт: @*@Html.DisplayFor(modelItem => item.CompletedTasks.FirstOrDefault().Grade) / @Html.DisplayFor(modelItem => item.MaxGrade)*@</p>
-                  <a class="btn details" asp-action="CompletedList" asp-route-id="@item.TaskId">Переглянути відповіді</a>
+                {
+                    <p>Кількість зданих робіт: @item.CompletedTasks.Where(b=>b.Solution != null).Count() / @ViewBag.studCount</p>
+                    <a class="btn details" asp-action="CompletedList" asp-route-id="@item.TaskId">Переглянути відповіді</a>
                   <div class="actions-dropdown">
                       <button class="actions-dropdown-button">•••</button>
                       <div class="actions-dropdown-content">
