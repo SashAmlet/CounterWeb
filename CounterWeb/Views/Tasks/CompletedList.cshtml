@@ -4,15 +4,26 @@
 @{
     List<User> users = ViewBag.userList;
     List<CompletedTask> ctasks = ViewBag.ctaskList;
+    List<User> foolList = ViewBag.foolList;
 }
+
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Готові відповіді</h1>
+        <h2 class="text-center mb-4">Готові відповіді</h2>
             <ul class="list-group">
                 @foreach(var p in Model)
                 {
                     User user = users.Where(b => b.UserId == p.UserId).FirstOrDefault();
                     CompletedTask ctask = ctasks.Where(b => b.UserCourseId == p.UserCourseId).FirstOrDefault();
-                    <a asp-action="Details" asp-route-userCourseId="@p.UserCourseId" asp-route-taskId="@ctask.TaskId" class="list-group-item list-group-item-action">@user.FirstName  @user.LastName  @ctask.Grade  балів</a>            
+					string grade = ctask.Grade == null? "немає":ctask.Grade.ToString();
+
+					<a asp-action="Details" asp-route-userCourseId="@p.UserCourseId" asp-route-taskId="@ctask.TaskId" class="list-group-item list-group-item-action">@user.FirstName  @user.LastName  |  @grade балів</a>            
+                }
+            </ul>
+        <h2 class="text-center mb-4">Не зробили</h2>
+            <ul class="list-group">
+                @foreach(var p in foolList)
+                {
+                    <li class="list-group-item list-group-item-action">@p.FirstName  @p.LastName</li>            
                 }
             </ul>
     </div>

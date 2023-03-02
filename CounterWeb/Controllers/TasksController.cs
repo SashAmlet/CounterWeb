@@ -303,26 +303,59 @@ namespace CounterWeb.Controllers
                 return NotFound();
             }
 
+
             var ctaskList = await _context.CompletedTasks.Where(b=>b.TaskId == id).ToListAsync();
 
             if (ctaskList == null)
             {
                 return NotFound();
             }
+
             var userCourseList =  (
                 from completedTask in ctaskList
                 join userCourse in _context.UserCourses on completedTask.UserCourseId equals userCourse.UserCourseId
                 select userCourse
             ).ToList();
-
+            // юзери, що виконали дз
             var userList = (
                 from userCourse in userCourseList
                 join user in _context.Users on userCourse.UserId equals user.UserId
                 select user
             ).ToList();
 
+			// дістаю курс в якому зараз працюю
+			var course = await (
+	            from t in _context.Tasks
+	            join c in _context.Courses on t.CourseId equals c.CourseId
+            	where t.TaskId == id
+            	select c
+            ).FirstOrDefaultAsync();
+
+            // дістаю усі UserCourses для мого курсу
+            var usercourses = await _context.UserCourses.Where(b => b.CourseId == course.CourseId).ToListAsync();
+			// дістаю усі UserId з тих UserCourses, по факту це і є усі id-шники юзерів у моєму курсі
+			var userIds = usercourses.Select(c => c.UserId).ToList();
+            // дістаю усіх студентів
+            var allStudents = await userManager.GetUsersInRoleAsync("student");
+            // дістаю усіх студентів конкретного курсу
+            var studentIds = allStudents.Where(b=>userIds.Contains(b.UserId)).Select(t => t.UserId).ToList();
+
+            var foolIds =
+                (
+                from studId in studentIds
+                where !userIds.Contains(studId)
+                select studId
+                ).ToList(); // усі UserId, що не зробили домашку
+               
+
+            var foolList = _context.Users.Where(b=> foolIds.Contains(b.UserId)).ToList();
+
+
+
+
             ViewBag.userList = userList;
             ViewBag.ctaskList = ctaskList;
+            ViewBag.foolList = foolList;
             return View(userCourseList);
         }
 

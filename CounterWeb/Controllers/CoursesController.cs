@@ -156,8 +156,8 @@ namespace CounterWeb.Controllers
             var teacherIds = teachers.Select(t => t.UserId).ToList();
             var studentIds = students.Select(t => t.UserId).ToList();
 
-            var teachList = await _context.UserCourses.Where(b => teacherIds.Contains(b.UserId.Value)).Select(b => b.User).ToListAsync();
-            var studList = await _context.UserCourses.Where(b => studentIds.Contains(b.UserId.Value)).Select(b => b.User).ToListAsync();
+            var teachList = await _context.UserCourses.Where(b => teacherIds.Contains(b.UserId.Value)).Where(b=>b.CourseId == id).Select(b => b.User).ToListAsync();
+            var studList = await _context.UserCourses.Where(b => studentIds.Contains(b.UserId.Value)).Where(b => b.CourseId == id).Select(b => b.User).ToListAsync();
 
             if (teachList == null && studList == null)
             {
