@@ -66,7 +66,7 @@ namespace CounterWeb.Controllers
             var usercourse = _context.UserCourses.Where(b => b.UserCourseId == userCourseId).FirstOrDefault();
 
             ViewBag.usercourse = usercourse;
-            ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
+            ViewBag.task = _context.Tasks.Where(b => b.TaskId == taskId).FirstOrDefault();
             //ViewBag.context = _context;
 
 
@@ -123,17 +123,17 @@ namespace CounterWeb.Controllers
             var usercourse = _context.UserCourses.Where(b => b.UserCourseId == UserCourseId).FirstOrDefault();
 
             ViewBag.usercourse = usercourse;
-            ViewBag.task = _context.Tasks.Where(b => b.CourseId == course.CourseId).FirstOrDefault();
+            ViewBag.task = _context.Tasks.Where(b => b.TaskId == TaskId).FirstOrDefault();
             //ViewBag.context = _context;
 
 
             return View(ctask);
         }
+
+        // POST: Tasks/ESTIMATE
         [Authorize(Roles = "teacher, admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-
-        // POST: Tasks/ESTIMATE
         public async Task<IActionResult> Estimate(int taskId, [Bind("CompletedTaskId, TaskId,Grade,Solution,UserCourseId")] CompletedTask task)
         {
 
@@ -192,9 +192,8 @@ namespace CounterWeb.Controllers
             {
                 try
                 {
-                    completedTasks.ToList()[0].UserCourseId = 0;
-                    completedTasks.ToList()[0].Task = task;
-                    task.CompletedTasks = completedTasks;
+                    task.Course = await _context.Courses.Where(b => b.CourseId == task.CourseId).FirstOrDefaultAsync();
+                    task.CompletedTasks = await _context.CompletedTasks.Where(c => c.TaskId == taskId).ToListAsync();
                     _context.Update(task);
                     await _context.SaveChangesAsync();
                 }

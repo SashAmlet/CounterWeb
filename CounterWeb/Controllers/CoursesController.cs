@@ -123,6 +123,8 @@ namespace CounterWeb.Controllers
             {
                 try
                 {
+                    course.Tasks = await _context.Tasks.Where(b=>b.CourseId == id).Include(b=>b.CompletedTasks).ToListAsync();
+                    course.UserCourses = await _context.UserCourses.Where(b=>b.CourseId==id).ToListAsync();
                     _context.Update(course);
                     await _context.SaveChangesAsync();
                 }

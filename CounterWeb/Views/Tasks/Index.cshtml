@@ -29,7 +29,8 @@
               }
               @if (User.IsInRole("teacher") || User.IsInRole("admin"))
                 {
-                    <p>Кількість зданих робіт: @item.CompletedTasks.Where(b=>b.Solution != null).Count() / @ViewBag.studCount</p>
+                    <p style="margin-top:auto">Оцінка за завдання: @item.MaxGrade</p>
+                    <p style="margin-top:auto">Кількість зданих робіт: @item.CompletedTasks.Where(b=>b.Solution != null).Count() / @ViewBag.studCount</p>
                     <a class="btn details" asp-action="CompletedList" asp-route-id="@item.TaskId">Переглянути відповіді</a>
                   <div class="actions-dropdown">
                       <button class="actions-dropdown-button">•••</button>

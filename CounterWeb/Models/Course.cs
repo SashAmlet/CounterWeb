@@ -11,7 +11,7 @@ public partial class Course
 
     public string? ZoomLink { get; set; }
 
-    public virtual ICollection<Task> Tasks { get; } = new List<Task>();
+    public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
 
-    public virtual ICollection<UserCourse> UserCourses { get; } = new List<UserCourse>();
+    public virtual ICollection<UserCourse> UserCourses { get; set; } = new List<UserCourse>();
 }
