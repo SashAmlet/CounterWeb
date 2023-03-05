@@ -232,8 +232,6 @@ namespace CounterWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            //TasksController tasksController = new TasksController(_context);
-
             if (_context.Courses == null)
             {
                 return Problem("Entity set 'CounterDbContext.Courses'  is null.");
