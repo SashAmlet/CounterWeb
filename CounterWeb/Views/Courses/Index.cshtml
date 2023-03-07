@@ -34,8 +34,12 @@ else
                             {
                                 <a class="btn edit" asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a>
                                 <a class="btn delete" asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
+                                <a class="btn edit" asp-action="Show" asp-route-id="@item.CourseId">Деталі курсу</a>
                             }
-                            <a class="btn edit" asp-action="Show" asp-route-id="@item.CourseId">Показати учасників курсу</a>
+                            else
+                            {
+                                <a class="btn edit" asp-action="Show" asp-route-id="@item.CourseId">Продивитись учасників курсу</a>
+                            }                        
 
                         </div>
                     </div>

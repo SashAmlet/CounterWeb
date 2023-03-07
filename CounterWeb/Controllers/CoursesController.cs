@@ -165,6 +165,7 @@ namespace CounterWeb.Controllers
             {
                 return NotFound();
             }
+            ViewBag.Id = id;
             return View(Tuple.Create(teachList, studList));
         }
 

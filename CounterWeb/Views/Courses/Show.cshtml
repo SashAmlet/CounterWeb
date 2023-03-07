@@ -18,3 +18,35 @@
                 }
             </ul>
     </div>
+    @if (User.IsInRole("teacher") || User.IsInRole("admin"))
+    {
+        <div class="container mt-5">
+            <h2 class="text-center mb-4">Статистика</h2>
+            <div id="chart1"></div>
+        </div>
+    }
+@section scripts
+{
+<script type = "text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+
+            $.get('/api/Chart/JsonData?id=@ViewBag.Id', function(JsonData) {//чому при вказанні функції метод не знаходять?
+                data = google.visualization.arrayToDataTable(JsonData, false);
+                var option = {
+                    title: "Успішність учнів курсу відповідно до балів за завдання",
+                    width: 500,
+                    height: 400
+                };
+                chart = new google.visualization.PieChart(document.getElementById('chart1'));
+                chart.draw(data, option);
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                // Код обработки ошибки
+                console.log("Ошибка запроса: " + textStatus, errorThrown);
+                });
+        }
+    </script>
+}
