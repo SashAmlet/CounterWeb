@@ -104,6 +104,19 @@ namespace CounterWeb.Controllers
             return RedirectToAction("Index", "Tasks", new { id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
         }
 
+        [AcceptVerbs("GET", "POST")]
+        public IActionResult IsNameUnique(string Name, int courseId)
+        {
+            bool isNameUnique = _context.Tasks.Where(b => b.CourseId == courseId).Select(b => b.Name).ToList().Contains(Name);
+            if (!isNameUnique)
+            {
+                return Json(true);
+            }
+            else
+            {
+                return Json("The name is already taken.");
+            }
+        }
         // GET: Tasks/ESTIMATE
         [Authorize(Roles = "teacher, admin")]
         public async Task<IActionResult> Estimate(int? UserCourseId, int? TaskId)// userCourseId

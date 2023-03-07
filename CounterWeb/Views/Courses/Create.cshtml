@@ -3,18 +3,16 @@
 @{
     ViewData["Title"] = "Create";
 }
-
 <h1>Create</h1>
 
 <h4>Course</h4>
-<hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" class="formWithValidation">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" type = "text" class="form-control"/>
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -23,8 +21,9 @@
                 <span asp-validation-for="ZoomLink" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Create" class="btn btn-primary validateBtn"/>
             </div>
+                
         </form>
     </div>
 </div>
@@ -35,4 +34,28 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @*<script src="~/js/validate.js"></script>*@
 }
+
+@*<script>
+  // Создаем список запрещенных слов
+  var bannedWords = @Html.Raw(Json.Serialize(ViewBag.CourseList));
+  var value;
+  function checkInput() {
+    var input = document.getElementById("Name");
+    value = input.value.trim().toLowerCase();
+    console.log("Value:", value);
+    console.log("Banned words:", bannedWords);
+
+    
+  }
+  function finalCheck()
+  {
+      // Проверяем, есть ли введенное слово в списке запрещенных слов
+    if (bannedWords.indexOf(value) !== -1) {
+      input.setCustomValidity("Такий курс вже є");
+    } else {
+      input.setCustomValidity("");
+    }
+  }
+</script>*@

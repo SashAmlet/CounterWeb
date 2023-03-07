@@ -90,6 +90,20 @@ namespace CounterWeb.Controllers
             }
             return View(course);
         }
+        // Validation
+        [AcceptVerbs("GET", "POST")]
+        public IActionResult IsNameUnique(string Name)
+        {
+            bool isNameUnique = _context.Courses.Select(b => b.Name).ToList().Contains(Name);
+            if (!isNameUnique)
+            {
+                return Json(true);
+            }
+            else
+            {
+                return Json("The name is already taken.");
+            }
+        }
 
         // GET: Courses/EDIT
         [Authorize(Roles = "teacher, admin")]
