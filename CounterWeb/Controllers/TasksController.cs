@@ -24,7 +24,6 @@ namespace CounterWeb.Controllers
             _context = context;
             this.userManager = userManager;
         }
-
         // GET: Tasks/INDEX
         public async Task<IActionResult> Index(int? id, string? name)
         {
@@ -152,16 +151,9 @@ namespace CounterWeb.Controllers
 
             if (ModelState.IsValid)
             {
-                /*var course = _context.Courses.Where(_c => _c.CourseId == courseId).FirstOrDefault();
-                course.Tasks.Add(task);
-                task.Course = course;
-                _context.Add(task);*/
                 _context.Update(task);
                 await _context.SaveChangesAsync();
-                //return RedirectToAction("Index", "Tasks", new {id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
             }
-            //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
-            //return View(task);
             return RedirectToAction("CompletedList", new { id = taskId});
         }
 
