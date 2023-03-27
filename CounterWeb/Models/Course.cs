@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CounterWeb.Models;
 
@@ -11,6 +12,7 @@ public partial class Course
     [Remote(action: "IsNameUnique", controller: "Courses", AdditionalFields = nameof(Name))]
     public string Name { get; set; } = null!;
 
+    [RegularExpression(@"^(https?|ftp)://[^\s/$.?#].[^\s]*$")]
     public string? ZoomLink { get; set; }
 
     public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();

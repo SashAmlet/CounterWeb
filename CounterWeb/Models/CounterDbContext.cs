@@ -62,7 +62,7 @@ public partial class CounterDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.ZoomLink)
-                .HasMaxLength(50)
+                .HasMaxLength(500)
                 .IsUnicode(false);
         });
 

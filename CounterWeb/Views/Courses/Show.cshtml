@@ -1,6 +1,7 @@
-﻿    @model Tuple< List<CounterWeb.Models.User>, List<CounterWeb.Models.User> >
+﻿@using Newtonsoft.Json;
+@model Tuple< List<CounterWeb.Models.User>, List<CounterWeb.Models.User>, List<CounterWeb.Models.Task> >
 
-    <title>Викладачі</title>
+<title>Викладачі</title>
     
 <link rel="stylesheet" type="text/css" href="~/css/chart.css">
     <div class="container mt-5">
@@ -8,19 +9,54 @@
             <ul class="list-group">
                 @foreach(var p in Model.Item1)
                 {
-                    <li class="list-group-item list-group-item-action">@p.FirstName  @p.LastName</li>            
+                    <li class="list-group-item list-group-item-action">@p.LastName  @p.FirstName</li>            
                 }
             </ul>
         <h2 class="text-center mb-4">Учні</h2>
             <ul class="list-group">
                 @foreach(var p in Model.Item2)
                 {
-                    <li class="list-group-item list-group-item-action">@p.FirstName  @p.LastName</li>            
+                    <li class="list-group-item list-group-item-action">@p.LastName  @p.FirstName</li>            
                 }
             </ul>
     </div>
     @if (User.IsInRole("teacher") || User.IsInRole("admin"))
     {
+        <h2 class="text-center mb-4">Журнал оцінок</h2>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                    <th></th>
+                        @foreach (var t in Model.Item3)
+                        {
+                            <th>@t.Name (@t.MaxGrade балів)</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Item2)
+                    {
+                        <tr>
+                            <th>@s.LastName @s.FirstName</th>
+                            @{
+                                List<CounterWeb.Models.UserCourse> userCourse = ViewBag.UserCourseId;
+                                int? userCourseId = userCourse.Where(c=>c.UserId == s.UserId).Select(a=>a.UserCourseId).FirstOrDefault();
+                            }
+                            @foreach (var t in Model.Item3)
+                            {
+                                var completedTask = t.CompletedTasks.FirstOrDefault(a => a.UserCourseId == userCourseId);
+                                var grade = completedTask != null ? completedTask.Grade : 0;
+                                
+                                <td>@grade</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
         <h2 class="text-center mb-4">Статистика</h2>
         <div class="charts-container">
             <div id="chart1" class="chart"></div>

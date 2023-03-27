@@ -24,9 +24,9 @@ else
     {
             <div class="product">
                 <h2>@Html.DisplayFor(modelItem => item.Name)</h2>
-                <p>@Html.DisplayFor(modelItem => item.ZoomLink)</p>
+                <a href=@Html.DisplayFor(modelItem => item.ZoomLink)>https://us04web.zoom.us/</a>
                 <div class="actions">
-                    <a class="btn details" asp-action="Details" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a>
+                    <a class="btn details" asp-action="Tasks" asp-route-id="@item.CourseId">Продивитись усі завдання курсу</a>
                     <div class="actions-dropdown">
                         <button class="actions-dropdown-button">•••</button>
                         <div class="actions-dropdown-content">

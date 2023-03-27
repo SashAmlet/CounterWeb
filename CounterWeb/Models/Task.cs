@@ -12,11 +12,8 @@ public partial class Task
 
     [Remote(action: "IsNameUnique", controller: "Tasks", AdditionalFields = nameof(Name) + "," + nameof(CourseId))]
     public string Name { get; set; } = null!;
-
     public string? Description { get; set; }
     public int? MaxGrade { get; set; }
-
     public virtual ICollection<CompletedTask>? CompletedTasks { get; set; } = new List<CompletedTask>();
-
     public virtual Course? Course { get; set; } = null!;
 }

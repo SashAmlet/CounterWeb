@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Exchange.WebServices.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using Newtonsoft.Json;
+using FluentAssertions.Equivalency;
+using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 
 namespace CounterWeb.Controllers
 {
@@ -34,25 +39,6 @@ namespace CounterWeb.Controllers
             return _context.Courses != null ?
                           View(courses) :
                           Problem("Entity set 'CounterDbContext.Courses'  is null.");
-        }
-
-        // GET: Courses/DETAILS
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.Courses == null)
-            {
-                return NotFound();
-            }
-
-            var course = await _context.Courses
-                .FirstOrDefaultAsync(m => m.CourseId == id);
-            if (course == null)
-            {
-                return NotFound();
-            }
-
-            return RedirectToAction("index", "Tasks", new {id = course.CourseId, name = course.Name });
-            //return View(course);
         }
 
         // GET: Courses/CREATE
@@ -103,6 +89,24 @@ namespace CounterWeb.Controllers
             {
                 return Json("The name is already taken.");
             }
+        }
+        // GET: Courses/Tasks/5
+        public async Task<IActionResult> Tasks(int? id)
+        {
+            if (id == null || _context.Courses == null)
+            {
+                return NotFound();
+            }
+
+            var course = await _context.Courses
+                .FirstOrDefaultAsync(m => m.CourseId == id);
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction("index", "Tasks", new { id = course.CourseId, name = course.Name });
+            //return View(course);
         }
 
         // GET: Courses/EDIT
@@ -174,13 +178,24 @@ namespace CounterWeb.Controllers
 
             var teachList = await _context.UserCourses.Where(b => teacherIds.Contains(b.UserId.Value)).Where(b=>b.CourseId == id).Select(b => b.User).ToListAsync();
             var studList = await _context.UserCourses.Where(b => studentIds.Contains(b.UserId.Value)).Where(b => b.CourseId == id).Select(b => b.User).ToListAsync();
-
+            var taskList = await _context.Tasks.Where(c=>c.CourseId == id).Include(a=>a.CompletedTasks).ToListAsync();
             if (teachList == null && studList == null)
             {
                 return NotFound();
             }
             ViewBag.Id = id;
-            return View(Tuple.Create(teachList, studList));
+            var userCourse = await _context.UserCourses
+                                                        .Where(c => c.CourseId == id)
+                                                        .Select(c => new CounterWeb.Models.UserCourse
+                                                        {
+                                                            UserCourseId = c.UserCourseId,
+                                                            UserId = c.UserId,
+                                                            CourseId = c.CourseId
+                                                        })
+                                                        .ToListAsync();
+
+            ViewBag.UserCourseId = userCourse;
+            return View(Tuple.Create(teachList, studList, taskList));
         }
 
         // GET: Courses/JOIN
