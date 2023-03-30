@@ -2548,7 +2548,7 @@ a {
 *,
 *:before,
 *:after {
-  box-sizing: border-box;
+  /* box-sizing: border-box; */
 }
 html {
   height: 100%;
@@ -13802,7 +13802,7 @@ section.u-image:not(.u-hover-box),
   transform: translate(0, 50%);
 }
 .u-group .u-container-layout > * {
-  position: relative;
+  /* position: relative; */
 }
 .u-group {
   display: flex;
@@ -17020,13 +17020,13 @@ p {
 .u-accordion:not([class*="u-align-"]),
 .u-repeater-item:not([class*="u-align-"]),
 .u-container-style:not([class*="u-align-"]) {
-  text-align: left;
+  /* text-align: left; */
 }
 .u-nav:not([class*="u-align-"]) .u-nav {
   text-align: left;
 }
 .u-text {
-  word-wrap: break-word;
+  /* word-wrap: break-word; */
   position: relative;
 }
 .u-word-break {

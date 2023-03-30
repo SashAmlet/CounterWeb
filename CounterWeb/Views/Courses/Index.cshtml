@@ -1,4 +1,5 @@
-﻿@model IEnumerable<CounterWeb.Models.Course>
+﻿@using CounterWeb
+@model IEnumerable<CounterWeb.Models.Course>
 
 @{
     ViewData["Title"] = "Назва курсів";
@@ -35,6 +36,7 @@ else
                                 <a class="btn edit" asp-action="Edit" asp-route-id="@item.CourseId">Редагувати курс</a>
                                 <a class="btn delete" asp-action="Delete" asp-route-id="@item.CourseId">Видалити курс</a>
                                 <a class="btn edit" asp-action="Show" asp-route-id="@item.CourseId">Деталі курсу</a>
+                                <a class="btn edit" id="copyButton" data-courseid="@item.CourseId" data-coursename="@item.Name">Скопіювати лінк до курсу</a>
                             }
                             else
                             {
@@ -47,3 +49,33 @@ else
             </div>
     }
 </div>
+
+
+<script>
+$(function() {
+    $('#copyButton').click(function() {
+
+        var id = $(this).data('courseid');
+        var name = $(this).data('coursename')
+
+        var myObject = {
+            courseId: id,
+            courseName: name
+        };
+
+        var json = JSON.stringify(myObject); // Кодую об'єкт, що зберігає id та name курсу, в строку формату json
+        var encoder = new TextEncoder();
+        var data = encoder.encode(json);     // Кодую той json в байтовий масив  
+        var encodedString = btoa(String.fromCharCode.apply(null, data)); // Кодую той масив у строку base64
+        
+        
+        var textToCopy = encodedString;
+
+        navigator.clipboard.writeText(textToCopy).then(function() {
+            alert('Текст скопирован в буфер обмена');
+        }, function() {
+            alert('Не удалось скопировать текст в буфер обмена');
+        });
+    });
+});
+</script>

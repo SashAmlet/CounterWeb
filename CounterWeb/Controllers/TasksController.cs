@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Exchange.WebServices.Data;
+using System.Threading.Tasks;
 
 namespace CounterWeb.Controllers
 {
@@ -104,10 +105,10 @@ namespace CounterWeb.Controllers
         }
 
         [AcceptVerbs("GET", "POST")]
-        public IActionResult IsNameUnique(string Name, int courseId)
+        public IActionResult IsNameUnique(int taskId, string Name, int courseId)
         {
-            bool isNameUnique = _context.Tasks.Where(b => b.CourseId == courseId).Select(b => b.Name).ToList().Contains(Name);
-            if (!isNameUnique)
+            bool isNameUnique = !_context.Tasks.Any(b => b.CourseId == courseId && b.Name == Name && b.TaskId != taskId);
+            if (isNameUnique)
             {
                 return Json(true);
             }
@@ -153,8 +154,15 @@ namespace CounterWeb.Controllers
             {
                 _context.Update(task);
                 await _context.SaveChangesAsync();
+                return RedirectToAction("CompletedList", new { id = taskId });
             }
-            return RedirectToAction("CompletedList", new { id = taskId});
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Tasks.Any(t => t.TaskId == task.TaskId));
+            var usercourse = _context.UserCourses.Where(b => b.UserCourseId == task.UserCourseId).FirstOrDefault();
+
+            ViewBag.usercourse = usercourse;
+            ViewBag.task = _context.Tasks.Where(b => b.TaskId == task.TaskId).FirstOrDefault();
+
+            return View("Estimate", task);
         }
 
         // GET: Tasks/EDIT

@@ -57,6 +57,26 @@
             </table>
         </div>
 
+        <div>
+            <h3>Оберіть excel-файл для заватаження</h3>
+            @using (Html.BeginForm("Import", "Courses", FormMethod.Post, new { enctype = "multipart/form-data", id = "frm-excel" }))
+            {
+                <div>
+                    Завантажте Excel-файл:
+                    <input type="file" name="fileExcel" id="fileExcel" />
+                    <div>
+                        <input type="submit" value="Завантажити" />
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div>
+            <h3>Завантаження інформації у файл</h3>
+            <a asp-action="Export">Завантажити </a>
+        </div>
+
+
         <h2 class="text-center mb-4">Статистика</h2>
         <div class="charts-container">
             <div id="chart1" class="chart"></div>

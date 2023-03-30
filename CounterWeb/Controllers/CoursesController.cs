@@ -12,6 +12,7 @@ using System.Text.Json;
 using Newtonsoft.Json;
 using FluentAssertions.Equivalency;
 using Microsoft.VisualStudio.Web.CodeGeneration.Design;
+using ClosedXML.Excel;
 
 namespace CounterWeb.Controllers
 {
@@ -78,10 +79,10 @@ namespace CounterWeb.Controllers
         }
         // Validation
         [AcceptVerbs("GET", "POST")]
-        public IActionResult IsNameUnique(string Name)
+        public IActionResult IsNameUnique(int CourseId, string Name)
         {
-            bool isNameUnique = _context.Courses.Select(b => b.Name).ToList().Contains(Name);
-            if (!isNameUnique)
+            bool isNameUnique = !_context.Courses.Any(b => b.Name == Name && b.CourseId != CourseId);
+            if (isNameUnique)
             {
                 return Json(true);
             }
@@ -207,9 +208,10 @@ namespace CounterWeb.Controllers
         // POST: Courses/JOIN
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Join(int id)
+        public async Task<IActionResult> Join(string encodedString)
         {
-            var course = _context.Courses.Where(b=>b.CourseId == id).FirstOrDefault();
+            var decodedObject = Helper.ToDecode(encodedString);
+            var course = _context.Courses.Where(b=>b.CourseId == decodedObject.Item1 && b.Name == decodedObject.Item2).FirstOrDefault();
             if (course == null)
             {
                 return NotFound();
@@ -285,9 +287,102 @@ namespace CounterWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /*// POST: Courses/Import
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(IFormFile fileExcel)
+        {
+            if (ModelState.IsValid)
+            {
+                if (fileExcel != null)
+                {
+                    using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
+                    {
+                        await fileExcel.CopyToAsync(stream);
+                        using (XLWorkbook workBook = new XLWorkbook(stream.ToString(), XLEventTracking.Disabled))
+                        {
+                            //перегляд усіх листів (в даному випадку категорій)
+                            //зробити: запитати, чи впвнений юзер у тому, що хоче заповнити усі курси (один worksheet - один курс, назва worksheet - назва курсу)
+                            foreach (IXLWorksheet worksheet in workBook.Worksheets)
+                            {
+                                //worksheet.Name - назва курсу. Пробуємо знайти в БД, якщо відсутня, то створюємо нову
+                                Course newcourse;
+                                var c = (from course in _context.Courses
+                                         where course.Name.Contains(worksheet.Name)
+                                         select course).ToList();
+                                if (c.Count > 0)
+                                {
+                                    newcourse = c[0];
+                                }
+                                else
+                                {
+                                    //зробити: запитати чи хоче юзер створити новий курс, інфа з якого є в excel file, але якого нема в бд
+                                    newcourse = new Course();
+                                    newcourse.Name = worksheet.Name;
+                                    newcourse.ZoomLink = "from EXCEL";
+                                    //додати в контекст
+                                    _context.Courses.Add(newcourse);
+                                }
+                                //перегляд усіх рядків                    
+                                foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
+                                {
+                                    *//*try
+                                    {
+                                        Book book = new Book();
+                                        book.Name = row.Cell(1).Value.ToString();
+                                        book.Info = row.Cell(6).Value.ToString();
+                                        book.Category = newcat;
+                                        _context.Books.Add(book);
+                                        //у разі наявності автора знайти його, у разі відсутності - додати
+                                        for (int i = 2; i <= 5; i++)
+                                        {
+                                            if (row.Cell(i).Value.ToString().Length > 0)
+                                            {
+                                                Author author;
+
+                                                var a = (from aut in _context.Authors
+                                                         where aut.Name.Contains(row.Cell(i).Value.ToString())
+                                                         select aut).ToList();
+                                                if (a.Count > 0)
+                                                {
+                                                    author = a[0];
+                                                }
+                                                else
+                                                {
+                                                    author = new Author();
+                                                    author.Name = row.Cell(i).Value.ToString();
+                                                    author.Info = "from EXCEL";
+                                                    //додати в контекст
+                                                    _context.Add(author);
+                                                }
+                                                AuthorBook ab = new AuthorBook();
+                                                ab.Book = book;
+                                                ab.Author = author;
+                                                _context.AuthorBooks.Add(ab);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        //logging самостійно :)
+
+                                    }*//*
+                                }
+                            }
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }*/
+
         private bool CourseExists(int id)
         {
           return (_context.Courses?.Any(e => e.CourseId == id)).GetValueOrDefault();
         }
+
+
     }
 }

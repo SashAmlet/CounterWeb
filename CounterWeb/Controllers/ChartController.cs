@@ -89,7 +89,7 @@ namespace CounterWeb.Controllers
                         ++i;
                     }
                 }
-                catStudents.Add(new object[] { student.FirstName + " " + student.LastName, (double)avr / i });
+                catStudents.Add(new object[] { student.FirstName + " " + student.LastName, (i == 0 ? 0 : (double)avr / i) });
             }
             
             return new JsonResult(catStudents);
