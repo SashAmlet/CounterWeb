@@ -9,12 +9,6 @@ namespace CounterWeb
     {
         public static string ToCode(int CourseId, string CourseName)
         {
-            /*string idDecoded = HttpUtility.UrlDecode(courseId); // розкодування зі string у json
-            string nameDecoded = HttpUtility.UrlDecode(courseName); // розкодування зі string у json
-
-            int CourseId = JsonConvert.DeserializeObject<int>(idDecoded);
-            string CourseName = JsonConvert.DeserializeObject<string>(nameDecoded);*/
-
             Tuple<int, string> myObject = Tuple.Create(CourseId, CourseName);
             string json = JsonConvert.SerializeObject(myObject);
             string encodedString = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));

@@ -12,7 +12,7 @@ public partial class CompletedTask
     public int CompletedTaskId { get; set; }
 
     public int TaskId { get; set; }
-    [CompletedTaskValidation]
+    [Validations.CompletedTaskValidation]
     public int? Grade { get; set; }
     public string? Solution { get; set; }
     public int? UserCourseId { get; set; }

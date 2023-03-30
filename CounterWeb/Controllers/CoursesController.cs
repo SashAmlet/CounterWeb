@@ -77,20 +77,6 @@ namespace CounterWeb.Controllers
             }
             return View(course);
         }
-        // Validation
-        [AcceptVerbs("GET", "POST")]
-        public IActionResult IsNameUnique(int CourseId, string Name)
-        {
-            bool isNameUnique = !_context.Courses.Any(b => b.Name == Name && b.CourseId != CourseId);
-            if (isNameUnique)
-            {
-                return Json(true);
-            }
-            else
-            {
-                return Json("The name is already taken.");
-            }
-        }
         // GET: Courses/Tasks/5
         public async Task<IActionResult> Tasks(int? id)
         {
@@ -287,8 +273,8 @@ namespace CounterWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        /*// POST: Courses/Import
-        [HttpPost]
+        // POST: Courses/Import
+        /*[HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Import(IFormFile fileExcel)
         {
@@ -326,7 +312,7 @@ namespace CounterWeb.Controllers
                                 //перегляд усіх рядків                    
                                 foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
                                 {
-                                    *//*try
+                                    try
                                     {
                                         Book book = new Book();
                                         book.Name = row.Cell(1).Value.ToString();
@@ -366,7 +352,7 @@ namespace CounterWeb.Controllers
                                     {
                                         //logging самостійно :)
 
-                                    }*//*
+                                    }
                                 }
                             }
                         }

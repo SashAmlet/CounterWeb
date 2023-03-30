@@ -1,7 +1,7 @@
 ﻿using CounterWeb.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace CounterWeb
+namespace CounterWeb.Validations
 {
     public class CompletedTaskValidation : ValidationAttribute
     {
@@ -18,7 +18,7 @@ namespace CounterWeb
             }
             if (completedTask.Grade < 0 || completedTask.Grade > completedTask.Task.MaxGrade)
             {
-                return new ValidationResult("Grade must be between 0 and " + completedTask.Task.MaxGrade.ToString()); 
+                return new ValidationResult("Grade must be between 0 and " + completedTask.Task.MaxGrade.ToString());
             }
 
             return ValidationResult.Success;

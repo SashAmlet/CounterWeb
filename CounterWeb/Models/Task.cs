@@ -11,11 +11,11 @@ public partial class Task
 
     public int CourseId { get; set; }
 
-    [Remote(action: "IsNameUnique", controller: "Tasks", AdditionalFields = nameof(TaskId) + "," + nameof(Name) + "," + nameof(CourseId))]
+    [Validations.TaskValidation.Name]
     public string Name { get; set; } = null!;
     public string? Description { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "The field must be greater than or equal to 0.")]
+    [Validations.TaskValidation.Grade]
     public int? MaxGrade { get; set; }
     public virtual ICollection<CompletedTask>? CompletedTasks { get; set; } = new List<CompletedTask>();
     public virtual Course? Course { get; set; } = null!;

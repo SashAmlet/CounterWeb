@@ -99,23 +99,9 @@ namespace CounterWeb.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index", "Tasks", new { id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
             }
-            //ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "Name", task.CourseId);
-            //return View(task);
-            return RedirectToAction("Index", "Tasks", new { id = courseId, name = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name });
-        }
-
-        [AcceptVerbs("GET", "POST")]
-        public IActionResult IsNameUnique(int taskId, string Name, int courseId)
-        {
-            bool isNameUnique = !_context.Tasks.Any(b => b.CourseId == courseId && b.Name == Name && b.TaskId != taskId);
-            if (isNameUnique)
-            {
-                return Json(true);
-            }
-            else
-            {
-                return Json("The name is already taken.");
-            }
+            ViewBag.CourseId = courseId;
+            ViewBag.CourseName = _context.Courses.Where(c => c.CourseId == courseId).FirstOrDefault().Name;
+            return View(task);
         }
         // GET: Tasks/ESTIMATE
         [Authorize(Roles = "teacher, admin")]

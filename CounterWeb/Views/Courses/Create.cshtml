@@ -34,28 +34,4 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    @*<script src="~/js/validate.js"></script>*@
 }
-
-@*<script>
-  // Создаем список запрещенных слов
-  var bannedWords = @Html.Raw(Json.Serialize(ViewBag.CourseList));
-  var value;
-  function checkInput() {
-    var input = document.getElementById("Name");
-    value = input.value.trim().toLowerCase();
-    console.log("Value:", value);
-    console.log("Banned words:", bannedWords);
-
-    
-  }
-  function finalCheck()
-  {
-      // Проверяем, есть ли введенное слово в списке запрещенных слов
-    if (bannedWords.indexOf(value) !== -1) {
-      input.setCustomValidity("Такий курс вже є");
-    } else {
-      input.setCustomValidity("");
-    }
-  }
-</script>*@

@@ -9,7 +9,7 @@ public partial class Course
 {
     public int CourseId { get; set; }
 
-    [Remote(action: "IsNameUnique", controller: "Courses", AdditionalFields = "CourseId,Name")]
+    [Validations.CourseValidation]
     public string Name { get; set; } = null!;
 
     [RegularExpression(@"^(https?|ftp)://[^\s/$.?#].[^\s]*$")]
