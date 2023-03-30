@@ -1,4 +1,5 @@
 ﻿@using Newtonsoft.Json;
+
 @model Tuple< List<CounterWeb.Models.User>, List<CounterWeb.Models.User>, List<CounterWeb.Models.Task> >
 
 <title>Викладачі</title>
@@ -57,7 +58,7 @@
             </table>
         </div>
 
-        <div>
+        @*<div>
             <h3>Оберіть excel-файл для заватаження</h3>
             @using (Html.BeginForm("Import", "Courses", FormMethod.Post, new { enctype = "multipart/form-data", id = "frm-excel" }))
             {
@@ -69,11 +70,11 @@
                     </div>
                 </div>
             }
-        </div>
+        </div>*@
 
         <div>
             <h3>Завантаження інформації у файл</h3>
-            <a asp-action="Export">Завантажити </a>
+            <a asp-action="Export" asp-route-courseId="@ViewBag.Id" asp-route-studListJson="@Json.Serialize(@Model.Item2.ToArray())" asp-route-userCourseListJson="@Json.Serialize(@ViewBag.UserCourseId)">Завантажити </a>
         </div>
 
 
@@ -102,7 +103,6 @@
         var students = @Json.Serialize(Model.Item2.ToArray())
         var jsonString = JSON.stringify(students) // кодування у формат json
         var studentsEncoded = encodeURIComponent(jsonString) // кодування самого json у string
-
         drawBarChart('@ViewBag.Id', studentsEncoded);
   });
 </script>

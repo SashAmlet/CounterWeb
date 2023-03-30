@@ -1,18 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CounterWeb.Models;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Exchange.WebServices.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-using Newtonsoft.Json;
-using FluentAssertions.Equivalency;
-using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 using ClosedXML.Excel;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace CounterWeb.Controllers
 {
@@ -274,7 +268,7 @@ namespace CounterWeb.Controllers
         }
 
         // POST: Courses/Import
-        /*[HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Import(IFormFile fileExcel)
         {
@@ -285,9 +279,9 @@ namespace CounterWeb.Controllers
                     using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
                     {
                         await fileExcel.CopyToAsync(stream);
-                        using (XLWorkbook workBook = new XLWorkbook(stream.ToString(), XLEventTracking.Disabled))
+                        using (XLWorkbook workBook = new XLWorkbook(stream.ToString()/*, XLEventTracking.Disabled*/))
                         {
-                            //перегляд усіх листів (в даному випадку категорій)
+                            //перегляд усіх листів (в даному випадку курсів)
                             //зробити: запитати, чи впвнений юзер у тому, що хоче заповнити усі курси (один worksheet - один курс, назва worksheet - назва курсу)
                             foreach (IXLWorksheet worksheet in workBook.Worksheets)
                             {
@@ -362,7 +356,62 @@ namespace CounterWeb.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
-        }*/
+        }
+
+        // POST: Courses/Export
+        public ActionResult Export(int? courseId, string? studListJson, string? userCourseListJson)
+        {//експорт журналу оцінок
+            List<User> studList = JsonConvert.DeserializeObject<List<User>>(studListJson);
+            List<UserCourse> userCourseList = JsonConvert.DeserializeObject<List<UserCourse>>(userCourseListJson);
+
+            using (XLWorkbook workbook = new XLWorkbook(/*XLEventTracking.Disabled*/))
+            {
+                var course = _context.Courses.Where(b => b.CourseId == courseId).Include(b=>b.Tasks).ThenInclude(a=>a.CompletedTasks).FirstOrDefault();
+
+                var worksheet = workbook.Worksheets.Add(course.Name);
+
+                for (int i = 0; i < course.Tasks.Count(); i++)
+                {
+                    var t = course.Tasks.ToArray()[i];
+                    worksheet.Cell(1, i+2).Value =t.Name + " (" + t.MaxGrade + " балів)" ;
+                }
+                worksheet.Row(1).Style.Font.Bold = true;
+
+                for (int i = 0; i < studList.Count(); i++)
+                {
+                    int j = 0;
+                    var stud = studList[i];
+                    worksheet.Cell(i + 2, j + 1).Value = stud.LastName + " " + stud.FirstName;
+                    int? userCourseId = userCourseList.Where(c => c.UserId == stud.UserId).Select(a => a.UserCourseId).FirstOrDefault();
+                    foreach (var task in course.Tasks)
+                    {
+                        var completedTask = task.CompletedTasks.FirstOrDefault(a => a.UserCourseId == userCourseId);
+                        var grade = completedTask != null ? completedTask.Grade : 0;
+                        worksheet.Cell(i+2, j + 2).Value = grade;
+                        j++;
+                    }
+                }
+                worksheet.Column(1).Style.Font.Bold = true;
+
+                for (int i = 0; i < course.Tasks.Count()+1; i++)
+                {
+                    worksheet.Column(i + 1).AdjustToContents(); // автоматичний підбір ширини стовпця
+                }
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Flush();
+
+                    return new FileContentResult(stream.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    {
+                        FileDownloadName = $"counter_{DateTime.UtcNow.ToShortDateString()}.xlsx"
+                    };
+                }
+            }
+        }
+
 
         private bool CourseExists(int id)
         {
