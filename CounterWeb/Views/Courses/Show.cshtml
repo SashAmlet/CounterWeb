@@ -5,7 +5,7 @@
 <title>Викладачі</title>
 @if (TempData.ContainsKey("Message"))
 {
-    <div class="alert alert-success">@TempData["Message"]</div>
+    <div class="alert alert-success">@Html.Raw(TempData["Message"].ToString().Replace("\n", "<br>"))</div>
 }
     
 <link rel="stylesheet" type="text/css" href="~/css/chart.css">

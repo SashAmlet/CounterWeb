@@ -9,6 +9,10 @@ namespace CounterWeb.Validations
         {
 
             var completedTask = (CompletedTask)validationContext.ObjectInstance;
+            if (completedTask == null)
+            {
+                return new ValidationResult("There is no such completed task.");
+            }
             int? grade = (int?)value;
             using (var dbContext = new CounterDbContext())
             {

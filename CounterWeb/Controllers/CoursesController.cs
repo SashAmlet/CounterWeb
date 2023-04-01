@@ -274,6 +274,7 @@ namespace CounterWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Import(int courseId, IFormFile fileExcel)
         {
+            List<string> errors = new List<string>();
             if (ModelState.IsValid && fileExcel != null)
             {
                 using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
@@ -312,6 +313,7 @@ namespace CounterWeb.Controllers
                                     var task = await _context.Tasks.Where(a => a.CourseId == courseId && a.Name.Contains(taskName)).FirstOrDefaultAsync();
                                     if (task is null)
                                         break;
+                                    
 
                                     // перевіряємо валідацію для Task.MaxGrade
                                     if (maxGrade is not null && int.TryParse(maxGrade, out g))
@@ -354,9 +356,12 @@ namespace CounterWeb.Controllers
                                             }
                                         }*/
                                     }
+                                    // явно вкажемо контексту, щоб він не відслідковував task
+                                    _context.Entry(task).State = EntityState.Detached;
                                     tasks.Add((col.ColumnNumber(), task));
                                 }
-                            }
+                            
+                            }/*
                             try
                             {
                                 _context.SaveChanges();
@@ -366,8 +371,7 @@ namespace CounterWeb.Controllers
                                 TempData["Message"] = "#1: " + ex.Message;
                                 return RedirectToAction(nameof(Show), new { id = courseId });
 
-                            }
-
+                            }*/
 
                             //перегляд усіх учнів
                             foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
@@ -402,13 +406,18 @@ namespace CounterWeb.Controllers
                                                 where usrCrs.CourseId == courseId && usrCrs.UserId == user.UserId
                                                 select ctsk
                                             ).FirstOrDefaultAsync();
+                                        // ВИВЕСТИ ПОВІДОМЛЕННЯ ЮЗЕРУ
                                         if (ctask is null)
+                                        {
+                                            if (row.Cell(t.Item1).Value.ToString() != "0")
+                                                errors.Add("Готового домашнього завдання учня " + user.LastName + " " + user.FirstName + " до " + t.Item2.Name + " не існує, його не можливо оцінити ( клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1 - 1).ToString() + "]) \n");
                                             break;
+                                        }
 
                                         int g = 0;
 
                                         // перевіряємо валідацію для CompletedTask.Grade
-                                        if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g))
+                                        if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g) && (ctask.Grade != g))
                                         {
                                             try
                                             {
@@ -417,6 +426,10 @@ namespace CounterWeb.Controllers
                                                     ctask.Grade = g;
                                                     _context.Update(ctask);
                                                     _context.SaveChanges();
+                                                }
+                                                else
+                                                {
+                                                    errors.Add("Клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1-1).ToString() + "] не пройшла валідацію (зверніть увагу на максимальний бал за завдання)\n");
                                                 }
                                             }
                                             catch (Exception ex)
@@ -448,6 +461,10 @@ namespace CounterWeb.Controllers
                                                 }
                                             }*/
                                         }
+                                        // явно вкажемо контексту, щоб він не відслідковував ctask
+                                        if(ctask.Task is not null)
+                                            _context.Entry(ctask.Task).State = EntityState.Detached;
+                                        _context.Entry(ctask).State = EntityState.Detached;
                                     }
                                 }
                             }
@@ -467,7 +484,12 @@ namespace CounterWeb.Controllers
 
                 }
             }
-            TempData["Message"] = "Успіх!";
+            string mess = string.Empty;
+            foreach(var err in errors)
+            {
+                mess += err;
+            }
+            TempData["Message"] = "Успіх!\n" + mess;
             return RedirectToAction(nameof(Show), new { id = courseId });
         }
 
