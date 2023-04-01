@@ -20,7 +20,17 @@ namespace CounterWeb.Validations.TaskValidation
                     return new ValidationResult("Please enter a value less than or equal to " + int.MaxValue);
                 }
             }
-
+            using(var _context = new CounterDbContext())
+            {
+                var task = (Models.Task)validationContext.ObjectInstance;
+                var completedTasks = _context.CompletedTasks.Where(a=>a.TaskId == task.TaskId).ToList();
+                foreach(var ct in completedTasks)
+                {
+                    ct.Grade = 0;
+                }
+                _context.UpdateRange(completedTasks);
+                _context.SaveChanges();
+            }
             return ValidationResult.Success;
         }
     }

@@ -192,6 +192,12 @@ namespace CounterWeb.Controllers
             {
                 try
                 {
+                    var compTasks = await _context.CompletedTasks.Where(a => a.TaskId == task.TaskId).ToListAsync();
+                    foreach(var compTask in compTasks)
+                    {
+                        compTask.Grade = 0;
+                    }
+                    _context.UpdateRange(compTasks);
                     task.Course = await _context.Courses.Where(b => b.CourseId == task.CourseId).FirstOrDefaultAsync();
                     task.Name = task.Name.Trim();
                     task.CompletedTasks = await _context.CompletedTasks.Where(c => c.TaskId == taskId).ToListAsync();

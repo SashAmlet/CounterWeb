@@ -312,7 +312,7 @@ namespace CounterWeb.Controllers
                                 {
                                     var task = await _context.Tasks.Where(a => a.CourseId == courseId && a.Name.Contains(taskName)).FirstOrDefaultAsync();
                                     if (task is null)
-                                        break;
+                                        continue;
                                     
 
                                     // перевіряємо валідацію для Task.MaxGrade
@@ -322,6 +322,7 @@ namespace CounterWeb.Controllers
                                         {
                                             if(Helper.ToValidate<Models.Task>(task, task.MaxGrade, g, "MaxGrade"))
                                             {
+                                                errors.Add("Через зміну максимальної кількості балів за " + task.Name.ToString() + " усі здані роботи на це завдання обнулились (окрім тих, що були в excel-файлі і відповідають валідації)\n");
                                                 task.MaxGrade = g;
                                                 _context.Update(task);
                                                 _context.SaveChanges();
@@ -332,46 +333,13 @@ namespace CounterWeb.Controllers
                                             TempData["Message"] = "#val1: " + ex.Message;
                                             return RedirectToAction(nameof(Show), new { id = courseId });
                                         }
-                                        /*if (task.MaxGrade != g)
-                                        {
-                                            // створюємо об'єкт ValidationContext, вказуючи тип об'єкта та ім'я властивості, яку потрібно перевірити
-                                            var validationContext = new ValidationContext(task)
-                                            {
-                                                MemberName = nameof(Models.Task.MaxGrade)
-                                            };
-
-                                            task.MaxGrade = g;
-                                            // виконуємо валідацію властивості task.MaxGrade
-                                            var validationResults = new List<ValidationResult>();
-                                            if (Validator.TryValidateProperty(g, validationContext, validationResults))
-                                            {
-                                                // якщо валідація успішна
-                                                _context.Update(task);
-                                            }
-                                            else
-                                            {
-                                                // TASK.MAXGRADE НЕ ВІДПОВІДАЄ ВАЛІДАЦІЇ
-                                                // більше не слідкуєм за task
-                                                //_context.Entry(task).State = EntityState.Detached;
-                                            }
-                                        }*/
                                     }
                                     // явно вкажемо контексту, щоб він не відслідковував task
                                     _context.Entry(task).State = EntityState.Detached;
                                     tasks.Add((col.ColumnNumber(), task));
                                 }
                             
-                            }/*
-                            try
-                            {
-                                _context.SaveChanges();
                             }
-                            catch (Exception ex)
-                            {
-                                TempData["Message"] = "#1: " + ex.Message;
-                                return RedirectToAction(nameof(Show), new { id = courseId });
-
-                            }*/
 
                             //перегляд усіх учнів
                             foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
@@ -397,6 +365,8 @@ namespace CounterWeb.Controllers
                                     //пробігаюсь по таскам
                                     foreach (var t in tasks)
                                     {
+                                        // явно вкажемо контексту, щоб він скинув усі об'єкти, що відслідковував
+                                        _context.ChangeTracker.Clear();
                                         // витягую CompletedTask юзера, що відповідає нашому таску та юзеру
                                         var ctask = await
                                             (
@@ -409,9 +379,10 @@ namespace CounterWeb.Controllers
                                         // ВИВЕСТИ ПОВІДОМЛЕННЯ ЮЗЕРУ
                                         if (ctask is null)
                                         {
-                                            if (row.Cell(t.Item1).Value.ToString() != "0")
+                                            int g1 = 0;
+                                            if (int.TryParse( row.Cell(t.Item1).Value.ToString(),out g1) && g1 != 0)
                                                 errors.Add("Готового домашнього завдання учня " + user.LastName + " " + user.FirstName + " до " + t.Item2.Name + " не існує, його не можливо оцінити ( клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1 - 1).ToString() + "]) \n");
-                                            break;
+                                            continue;
                                         }
 
                                         int g = 0;
@@ -437,34 +408,11 @@ namespace CounterWeb.Controllers
                                                 TempData["Message"] = "#val2: " + ex.Message;
                                                 return RedirectToAction(nameof(Show), new { id = courseId });
                                             }
-                                            /*if (ctask.Grade != g)
-                                            {
-                                                ctask.Grade = g;
-
-                                                // створюємо об'єкт ValidationContext, вказуючи тип об'єкта та ім'я властивості, яку потрібно перевірити
-                                                var validationContext = new ValidationContext(ctask)
-                                                {
-                                                    MemberName = nameof(Models.CompletedTask.Grade)
-                                                };
-                                                // виконуємо валідацію властивості ctask.Grade
-                                                var validationResults = new List<ValidationResult>();
-                                                if (Validator.TryValidateProperty(g, validationContext, validationResults))
-                                                {
-                                                    // якщо валідація успішна
-                                                    _context.Update(ctask);
-                                                }
-                                                else
-                                                {
-                                                    // TASK.MAXGRADE НЕ ВІДПОВІДАЄ ВАЛІДАЦІЇ
-                                                    // більше не слідкуєм за ctask
-                                                    //_context.Entry(ctask).State = EntityState.Detached;
-                                                }
-                                            }*/
                                         }
                                         // явно вкажемо контексту, щоб він не відслідковував ctask
-                                        if(ctask.Task is not null)
+                                        /*if(ctask.Task is not null)
                                             _context.Entry(ctask.Task).State = EntityState.Detached;
-                                        _context.Entry(ctask).State = EntityState.Detached;
+                                        _context.Entry(ctask).State = EntityState.Detached;*/
                                     }
                                 }
                             }
