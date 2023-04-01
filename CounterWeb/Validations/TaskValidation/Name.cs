@@ -21,6 +21,11 @@ namespace CounterWeb.Validations.TaskValidation
                         return new ValidationResult("The name '" + task.Name + "' is already taken.");
                     }
                 }
+                //службовий символ
+                if(task.Name.Contains('(') && task.Name.Contains(')'))
+                {
+                    return new ValidationResult("Please avoid the special characters '(' and ')', they are reserved");
+                }
 
             }
 

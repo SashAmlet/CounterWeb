@@ -3,6 +3,10 @@
 @model Tuple< List<CounterWeb.Models.User>, List<CounterWeb.Models.User>, List<CounterWeb.Models.Task> >
 
 <title>Викладачі</title>
+@if (TempData.ContainsKey("Message"))
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
     
 <link rel="stylesheet" type="text/css" href="~/css/chart.css">
     <div class="container mt-5">
@@ -58,9 +62,9 @@
             </table>
         </div>
 
-        @*<div>
+        <div>
             <h3>Оберіть excel-файл для заватаження</h3>
-            @using (Html.BeginForm("Import", "Courses", FormMethod.Post, new { enctype = "multipart/form-data", id = "frm-excel" }))
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data", id = "frm-excel", action = Url.Action("Import", "Courses", new { courseId = ViewBag.Id }) }))
             {
                 <div>
                     Завантажте Excel-файл:
@@ -70,7 +74,7 @@
                     </div>
                 </div>
             }
-        </div>*@
+        </div>
 
         <div>
             <h3>Завантаження інформації у файл</h3>

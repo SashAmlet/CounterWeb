@@ -8,10 +8,9 @@ namespace CounterWeb.Validations.TaskValidation
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             // Validate the MaxGrade property
-            var maxGradeProperty = validationContext.ObjectType.GetProperty("MaxGrade");
-            if (maxGradeProperty != null)
+            if (value != null)
             {
-                int? maxGradeValue = (int?)maxGradeProperty.GetValue(validationContext.ObjectInstance);
+                int? maxGradeValue = (int?)value;
                 if (maxGradeValue < 0)
                 {
                     return new ValidationResult("Please enter a value greater than or equal to 0.");
@@ -25,5 +24,6 @@ namespace CounterWeb.Validations.TaskValidation
             return ValidationResult.Success;
         }
     }
+
 
 }

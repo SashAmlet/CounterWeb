@@ -93,6 +93,7 @@ namespace CounterWeb.Controllers
             {
                 var course = _context.Courses.Where(_c => _c.CourseId == courseId).FirstOrDefault();
                 course.Tasks.Add(task);
+                task.Name = task.Name.Trim();
                 task.Course = course;
                 _context.Add(task);
                 _context.Update(course);
@@ -192,6 +193,7 @@ namespace CounterWeb.Controllers
                 try
                 {
                     task.Course = await _context.Courses.Where(b => b.CourseId == task.CourseId).FirstOrDefaultAsync();
+                    task.Name = task.Name.Trim();
                     task.CompletedTasks = await _context.CompletedTasks.Where(c => c.TaskId == taskId).ToListAsync();
                     _context.Update(task);
                     await _context.SaveChangesAsync();

@@ -1,5 +1,7 @@
 ﻿using CounterWeb.Models;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Web;
 
@@ -25,6 +27,31 @@ namespace CounterWeb
             var decodedJson = Encoding.UTF8.GetString(decodedBytes);    // Декодую масив байтів у json
             var decodedObject = JsonConvert.DeserializeAnonymousType(decodedJson, new { courseId = default(int), courseName = default(string) }); // декодую json у об'єкт, що буде зберігати id курса та name
             return (decodedObject.courseId, decodedObject.courseName);
+        }
+        public static bool ToValidate<T>(T _object, int? curValue, int newValue, string propertyName)
+        {
+            if (curValue != newValue)
+            {
+                // створюємо об'єкт ValidationContext, вказуючи тип об'єкта та ім'я властивості, яку потрібно перевірити
+                var validationContext = new ValidationContext(_object)
+                {
+                    MemberName = propertyName,
+                };
+                // виконуємо валідацію властивості task.MaxGrade
+                var validationResults = new List<ValidationResult>();
+                if (Validator.TryValidateProperty(newValue, validationContext, validationResults))
+                {
+                    // якщо валідація успішна
+                    return true;
+                }
+                else
+                {
+                    // TASK.MAXGRADE НЕ ВІДПОВІДАЄ ВАЛІДАЦІЇ
+                    return false;
+                }
+
+            }
+            return false;
         }
 
     }

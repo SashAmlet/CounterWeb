@@ -7,6 +7,8 @@ using System.Data;
 using ClosedXML.Excel;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CounterWeb.Controllers
 {
@@ -270,82 +272,182 @@ namespace CounterWeb.Controllers
         // POST: Courses/Import
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Import(IFormFile fileExcel)
+        public async Task<IActionResult> Import(int courseId, IFormFile fileExcel)
         {
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && fileExcel != null)
             {
-                if (fileExcel != null)
+                using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
                 {
-                    using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
+                    await fileExcel.CopyToAsync(stream);
+                    using (XLWorkbook workBook = new XLWorkbook(stream))
                     {
-                        await fileExcel.CopyToAsync(stream);
-                        using (XLWorkbook workBook = new XLWorkbook(stream.ToString()/*, XLEventTracking.Disabled*/))
+                        // перевіряємо усі сторінки excel файлу
+                        foreach (IXLWorksheet worksheet in workBook.Worksheets)
                         {
-                            //перегляд усіх листів (в даному випадку курсів)
-                            //зробити: запитати, чи впвнений юзер у тому, що хоче заповнити усі курси (один worksheet - один курс, назва worksheet - назва курсу)
-                            foreach (IXLWorksheet worksheet in workBook.Worksheets)
-                            {
-                                //worksheet.Name - назва курсу. Пробуємо знайти в БД, якщо відсутня, то створюємо нову
-                                Course newcourse;
-                                var c = (from course in _context.Courses
-                                         where course.Name.Contains(worksheet.Name)
-                                         select course).ToList();
-                                if (c.Count > 0)
-                                {
-                                    newcourse = c[0];
-                                }
-                                else
-                                {
-                                    //зробити: запитати чи хоче юзер створити новий курс, інфа з якого є в excel file, але якого нема в бд
-                                    newcourse = new Course();
-                                    newcourse.Name = worksheet.Name;
-                                    newcourse.ZoomLink = "from EXCEL";
-                                    //додати в контекст
-                                    _context.Courses.Add(newcourse);
-                                }
-                                //перегляд усіх рядків                    
-                                foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
-                                {
-                                    try
-                                    {
-                                        Book book = new Book();
-                                        book.Name = row.Cell(1).Value.ToString();
-                                        book.Info = row.Cell(6).Value.ToString();
-                                        book.Category = newcat;
-                                        _context.Books.Add(book);
-                                        //у разі наявності автора знайти його, у разі відсутності - додати
-                                        for (int i = 2; i <= 5; i++)
-                                        {
-                                            if (row.Cell(i).Value.ToString().Length > 0)
-                                            {
-                                                Author author;
+                            //worksheet.Name - назва курсу (назва excel файлу)
+                            var course = await
+                                (
+                                    from crs in _context.Courses
+                                    where crs.Name.Contains(worksheet.Name) && crs.CourseId == courseId
+                                    select crs
+                                ).AsNoTracking().FirstOrDefaultAsync();
 
-                                                var a = (from aut in _context.Authors
-                                                         where aut.Name.Contains(row.Cell(i).Value.ToString())
-                                                         select aut).ToList();
-                                                if (a.Count > 0)
+                            if (course is null)
+                            {
+                                // запитати чи хоче юзер створити новий курс, інфа з якого є в excel file, але якого нема в бд
+                                TempData["Message"] = "Помилка з назвою курсу в excel файлі";
+                                return RedirectToAction(nameof(Show), new { id = courseId });
+                            }
+
+                            // формую список тасків, які є в excel файлі, та в БД у відповідного курса (зберігається номер колонки та відповідний таск).
+                            List<(int, Models.Task)> tasks = new List<(int, Models.Task)>();
+                            foreach (IXLColumn col in worksheet.ColumnsUsed().Skip(1))
+                            {
+                                // ДОПОВНИТИ ВІДСТАННЮ ЛЕВЕШТЕЙНА
+                                string? taskName = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').FirstOrDefault()?.Trim();
+                                string? maxGrade = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').LastOrDefault()?.Split(' ').FirstOrDefault()?.Trim();
+                                int g = -1;
+                                if (taskName is not null)
+                                {
+                                    var task = await _context.Tasks.Where(a => a.CourseId == courseId && a.Name.Contains(taskName)).FirstOrDefaultAsync();
+                                    if (task is null)
+                                        break;
+
+                                    // перевіряємо валідацію для Task.MaxGrade
+                                    if (maxGrade is not null && int.TryParse(maxGrade, out g))
+                                    {
+                                        try
+                                        {
+                                            if(Helper.ToValidate<Models.Task>(task, task.MaxGrade, g, "MaxGrade"))
+                                            {
+                                                task.MaxGrade = g;
+                                                _context.Update(task);
+                                                _context.SaveChanges();
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            TempData["Message"] = "#val1: " + ex.Message;
+                                            return RedirectToAction(nameof(Show), new { id = courseId });
+                                        }
+                                        /*if (task.MaxGrade != g)
+                                        {
+                                            // створюємо об'єкт ValidationContext, вказуючи тип об'єкта та ім'я властивості, яку потрібно перевірити
+                                            var validationContext = new ValidationContext(task)
+                                            {
+                                                MemberName = nameof(Models.Task.MaxGrade)
+                                            };
+
+                                            task.MaxGrade = g;
+                                            // виконуємо валідацію властивості task.MaxGrade
+                                            var validationResults = new List<ValidationResult>();
+                                            if (Validator.TryValidateProperty(g, validationContext, validationResults))
+                                            {
+                                                // якщо валідація успішна
+                                                _context.Update(task);
+                                            }
+                                            else
+                                            {
+                                                // TASK.MAXGRADE НЕ ВІДПОВІДАЄ ВАЛІДАЦІЇ
+                                                // більше не слідкуєм за task
+                                                //_context.Entry(task).State = EntityState.Detached;
+                                            }
+                                        }*/
+                                    }
+                                    tasks.Add((col.ColumnNumber(), task));
+                                }
+                            }
+                            try
+                            {
+                                _context.SaveChanges();
+                            }
+                            catch (Exception ex)
+                            {
+                                TempData["Message"] = "#1: " + ex.Message;
+                                return RedirectToAction(nameof(Show), new { id = courseId });
+
+                            }
+
+
+                            //перегляд усіх учнів
+                            foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
+                            {
+                                // ДОПОВНИТИ ВІДСТАННЮ ЛЕВЕШТЕЙНА
+                                // витягую ім'я та призвище з рядка excel
+                                string lastName = row.Cell(1).Value.ToString().Trim().Split(' ').First();
+                                string firstName = row.Cell(1).Value.ToString().Trim().Split(' ').Last();
+
+                                // витягую саме того юзера, що має такі ім'я - прізвище, та є у відповідному курсі
+                                var user = await
+                                    (
+                                        from usr in _context.Users
+                                        where usr.FirstName == firstName && usr.LastName == lastName
+                                        join usrCrs in _context.UserCourses on usr.UserId equals usrCrs.UserId
+                                        where usrCrs.CourseId == courseId
+                                        select usr
+
+                                    ).AsNoTracking().FirstOrDefaultAsync();
+
+                                if (user is not null)
+                                {
+                                    //пробігаюсь по таскам
+                                    foreach (var t in tasks)
+                                    {
+                                        // витягую CompletedTask юзера, що відповідає нашому таску та юзеру
+                                        var ctask = await
+                                            (
+                                                from ctsk in _context.CompletedTasks
+                                                where ctsk.TaskId == t.Item2.TaskId
+                                                join usrCrs in _context.UserCourses on ctsk.UserCourseId equals usrCrs.UserCourseId
+                                                where usrCrs.CourseId == courseId && usrCrs.UserId == user.UserId
+                                                select ctsk
+                                            ).FirstOrDefaultAsync();
+                                        if (ctask is null)
+                                            break;
+
+                                        int g = 0;
+
+                                        // перевіряємо валідацію для CompletedTask.Grade
+                                        if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g))
+                                        {
+                                            try
+                                            {
+                                                if(Helper.ToValidate<Models.CompletedTask>(ctask, ctask.Grade, g, "Grade"))
                                                 {
-                                                    author = a[0];
+                                                    ctask.Grade = g;
+                                                    _context.Update(ctask);
+                                                    _context.SaveChanges();
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                TempData["Message"] = "#val2: " + ex.Message;
+                                                return RedirectToAction(nameof(Show), new { id = courseId });
+                                            }
+                                            /*if (ctask.Grade != g)
+                                            {
+                                                ctask.Grade = g;
+
+                                                // створюємо об'єкт ValidationContext, вказуючи тип об'єкта та ім'я властивості, яку потрібно перевірити
+                                                var validationContext = new ValidationContext(ctask)
+                                                {
+                                                    MemberName = nameof(Models.CompletedTask.Grade)
+                                                };
+                                                // виконуємо валідацію властивості ctask.Grade
+                                                var validationResults = new List<ValidationResult>();
+                                                if (Validator.TryValidateProperty(g, validationContext, validationResults))
+                                                {
+                                                    // якщо валідація успішна
+                                                    _context.Update(ctask);
                                                 }
                                                 else
                                                 {
-                                                    author = new Author();
-                                                    author.Name = row.Cell(i).Value.ToString();
-                                                    author.Info = "from EXCEL";
-                                                    //додати в контекст
-                                                    _context.Add(author);
+                                                    // TASK.MAXGRADE НЕ ВІДПОВІДАЄ ВАЛІДАЦІЇ
+                                                    // більше не слідкуєм за ctask
+                                                    //_context.Entry(ctask).State = EntityState.Detached;
                                                 }
-                                                AuthorBook ab = new AuthorBook();
-                                                ab.Book = book;
-                                                ab.Author = author;
-                                                _context.AuthorBooks.Add(ab);
-                                            }
+                                            }*/
                                         }
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        //logging самостійно :)
-
                                     }
                                 }
                             }
@@ -353,9 +455,20 @@ namespace CounterWeb.Controllers
                     }
                 }
 
-                await _context.SaveChangesAsync();
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception e)
+                {
+                    TempData["Message"] = "#2: " + e.Message;
+                    return RedirectToAction(nameof(Show), new { id = courseId });
+
+                }
             }
-            return RedirectToAction(nameof(Index));
+            TempData["Message"] = "Успіх!";
+            return RedirectToAction(nameof(Show), new { id = courseId });
         }
 
         // POST: Courses/Export
