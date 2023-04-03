@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace CounterWeb.Controllers
 {
@@ -308,6 +309,8 @@ namespace CounterWeb.Controllers
                                 string? taskName = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').FirstOrDefault()?.Trim();
                                 string? maxGrade = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').LastOrDefault()?.Split(' ').FirstOrDefault()?.Trim();
                                 int g = -1;
+
+
                                 if (taskName is not null)
                                 {
                                     var task = await _context.Tasks.Where(a => a.CourseId == courseId && a.Name.Contains(taskName)).FirstOrDefaultAsync();
@@ -344,13 +347,12 @@ namespace CounterWeb.Controllers
                             //перегляд усіх учнів
                             foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
                             {
-                                // ДОПОВНИТИ ВІДСТАННЮ ЛЕВЕШТЕЙНА
-                                // витягую ім'я та призвище з рядка excel
+                                /*// витягую ім'я та призвище з рядка excel
                                 string lastName = row.Cell(1).Value.ToString().Trim().Split(' ').First();
-                                string firstName = row.Cell(1).Value.ToString().Trim().Split(' ').Last();
+                                string firstName = row.Cell(1).Value.ToString().Trim().Split(' ').Last();*/
 
                                 // витягую саме того юзера, що має такі ім'я - прізвище, та є у відповідному курсі
-                                var user = await
+                                /*var user = await
                                     (
                                         from usr in _context.Users
                                         where usr.FirstName == firstName && usr.LastName == lastName
@@ -358,14 +360,39 @@ namespace CounterWeb.Controllers
                                         where usrCrs.CourseId == courseId
                                         select usr
 
-                                    ).AsNoTracking().FirstOrDefaultAsync();
+                                    ).AsNoTracking().FirstOrDefaultAsync();*/
+
+                                // витягую ім'я юзера з клітинки
+                                string cellUser = row.Cell(1).Value.ToString();
+                                // витягую усіх юзерів мого курсу
+                                var userList = await
+                                    (
+                                        from usr in _context.Users
+                                        join usrCrs in _context.UserCourses on usr.UserId equals usrCrs.UserId
+                                        where usrCrs.CourseId == courseId
+                                        select usr
+
+                                    ).AsNoTracking().ToListAsync();
+                                // витягую найбільш схожого юзера та відцоток схожості
+                                var jaroWink = Helper.StringMathing(userList, cellUser);
+                                User user = new User();
+                                if (jaroWink.Item1 >= 0.95)
+                                    user = jaroWink.Item2;
+                                else
+                                {
+                                    // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
+                                    TempData["Message"] = "378 строка, реалізація jaroWink для user";
+                                    return RedirectToAction(nameof(Show), new { id = courseId });
+                                }
+
+
 
                                 if (user is not null)
                                 {
                                     //пробігаюсь по таскам
                                     foreach (var t in tasks)
                                     {
-                                        // явно вкажемо контексту, щоб він скинув усі об'єкти, що відслідковував
+                                        // явно вкажемо контексту, щоб він скинув усі об'єкти, що відслідковував (запобігає вийнятку)
                                         _context.ChangeTracker.Clear();
                                         // витягую CompletedTask юзера, що відповідає нашому таску та юзеру
                                         var ctask = await
