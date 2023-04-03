@@ -53,17 +53,27 @@ namespace CounterWeb
             }
             return false;
         }
-        public static (double, User) StringMathing(List<User> userList, string cellUser)
+
+        public static (double, T?) StringMatching<T>(List<T> userList, string cellUser)
         {//серед усіх юзерів з userList знаходжу того, ім'я якого найбільш похоже на cellUser
 
             double bestDistance = Double.MinValue;
-            User bestMatch = new User();
+            double jaroWinklerDistance = 0;
+            T? bestMatch = default;
 
-            foreach (User u in userList)
+            foreach (T u in userList)
             {
-                double jaroWinklerDistance = JaroWinklerDistance(u.LastName.Replace(" ", "") + u.FirstName.Replace(" ", ""), cellUser.Replace(" ", ""));
-                //double jaroWinklerDistance_not_working = JaroWinklerDistance_chat(u.LastName.Replace(" ","") + u.FirstName.Replace(" ", ""), cellUser.Replace(" ",""));
-
+                if (u is User user)
+                {
+                    // використовую метор Джаро-Вінклера, бо він дозволяє відслідковувати тринспозиції слів
+                    jaroWinklerDistance = JaroWinklerDistance(user.LastName.Replace(" ", "") + user.FirstName.Replace(" ", ""), cellUser.Replace(" ", ""));
+                }
+                else if (u is Models.Task task)
+                {
+                    // використовую метод Дамерау-Левештейна,бо транспозиція слів тут не потрібна, а в загальному випадку відповідь точніше
+                    jaroWinklerDistance = DamerauLevenshteinDistance(task.Name.Replace(" ", ""), cellUser.Replace(" ", ""));
+                }
+                
                 if (jaroWinklerDistance > bestDistance)
                 {
                     bestDistance = jaroWinklerDistance;
@@ -75,7 +85,7 @@ namespace CounterWeb
         }
         private static double JaroWinklerDistance(string s1, string s2)
         {
-            // Алгоритм Джаро-Вінклера для підрахунку "схожості строк"
+            // Алгоритм Джаро-Вінклера для підрахунку "схожості строк" // уся інфа за посиланням "https://habr.com/ru/post/671136/"
             int len1 = s1.Length;
             int len2 = s2.Length;
             if (len1 == 0 || len2 == 0)
@@ -137,7 +147,43 @@ namespace CounterWeb
             return jaro + (0.1 * commonPrefix * (1 - jaro));
         }
 
-        private static double JaroWinklerDistance_chat(string s1, string s2)
+        private static double DamerauLevenshteinDistance(string str1, string str2)
+        {// Алгоритм Дамерау - Левенштейна для підрахунку "схожості строк" //  уся іінфа за посиланням "https://habr.com/ru/post/676858/"
+            int[,] distances = new int[str1.Length + 1, str2.Length + 1];
+
+            for (int i = 0; i <= str1.Length; i++)
+            {
+                distances[i, 0] = i;
+            }
+
+            for (int j = 0; j <= str2.Length; j++)
+            {
+                distances[0, j] = j;
+            }
+
+            for (int i = 1; i <= str1.Length; i++)
+            {
+                for (int j = 1; j <= str2.Length; j++)
+                {
+                    int cost = (str1[i - 1] == str2[j - 1]) ? 0 : 1;
+
+                    distances[i, j] = Math.Min(
+                        Math.Min(distances[i - 1, j] + 1, distances[i, j - 1] + 1),
+                        distances[i - 1, j - 1] + cost);
+
+                    if (i > 1 && j > 1 && str1[i - 1] == str2[j - 2] && str1[i - 2] == str2[j - 1])
+                    {
+                        distances[i, j] = Math.Min(distances[i, j], distances[i - 2, j - 2] + cost);
+                    }
+                }
+            }
+
+            int maxLength = Math.Max(str1.Length, str2.Length);
+            return 1.0 - (double)distances[str1.Length, str2.Length]/maxLength;
+        }
+
+
+        /*private static double JaroWinklerDistance_chat(string s1, string s2)
         {
             // Алгоритм Джаро-Вінклера для підрахунку "схожості строк"
             int len1 = s1.Length;
@@ -208,6 +254,6 @@ namespace CounterWeb
             }
 
             return jaroWinkler + (0.1 * commonPrefix * (1 - jaroWinkler));
-        }
+        }*/
     }
 }

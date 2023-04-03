@@ -305,25 +305,52 @@ namespace CounterWeb.Controllers
                             List<(int, Models.Task)> tasks = new List<(int, Models.Task)>();
                             foreach (IXLColumn col in worksheet.ColumnsUsed().Skip(1))
                             {
-                                // ДОПОВНИТИ ВІДСТАННЮ ЛЕВЕШТЕЙНА
-                                string? taskName = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').FirstOrDefault()?.Trim();
-                                string? maxGrade = col.Cell(1).Value.ToString().TrimEnd(')').Split('(').LastOrDefault()?.Split(' ').FirstOrDefault()?.Trim();
-                                int g = -1;
+                                string cellText = col.Cell(1).Value.ToString();
+
+                                // витягую значення MaxGrade (те що в скобочках біля назви завдання) якщо воно є
+                                int? startIndex = cellText.IndexOf('(') + 1;
+                                int? endIndex = cellText.LastIndexOf(')');
+                                string? maxGrade = null;
+                                if (startIndex is not null && endIndex is not null)
+                                    maxGrade = cellText[startIndex.Value..endIndex.Value]; // у цю змінну я витягую увесь вміст скобочок
+                                else
+                                    errors.Add("Максимальний бал для стовпця " + (col.ColumnNumber() - 1).ToString() + " не був змінений через неправильний формат вводу. Якщо ви хочете змінити максимальну оцінку для завдання, то слідуйте наступному шаблону 'Назва завдання (16 балів)'\n");
 
 
-                                if (taskName is not null)
+
+                                // витягую task, чиє ім'я найбільш схоже до того, що в табличці написано
+                                string? taskName = maxGrade is null ? cellText : cellText.Replace('(' + maxGrade + ')', "");
+
+                                if (taskName is null)
                                 {
-                                    var task = await _context.Tasks.Where(a => a.CourseId == courseId && a.Name.Contains(taskName)).FirstOrDefaultAsync();
-                                    if (task is null)
-                                        continue;
-                                    
+                                    continue;
+                                }
+
+                                var taskList = await _context.Tasks.AsNoTracking().Where(a => a.CourseId == courseId).ToListAsync();
+                                
+                                var jaro_Wink = Helper.StringMatching<Models.Task>(taskList, taskName);
+
+                                Models.Task? task = new Models.Task();
+                                if (jaro_Wink.Item1 >= 0.5)
+                                    task = jaro_Wink.Item2;
+                                else
+                                {
+                                    // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
+                                    TempData["Message"] = "CoursesController -> Import, реалізація jaroWink для task";
+                                    return RedirectToAction(nameof(Show), new { id = courseId });
+                                }
+
+                                if (task is not null)
+                                {
+
 
                                     // перевіряємо валідацію для Task.MaxGrade
-                                    if (maxGrade is not null && int.TryParse(maxGrade, out g))
+                                    int g = -1;
+                                    if (maxGrade is not null && int.TryParse(new string(maxGrade.Where(char.IsDigit).ToArray()), out g)) // витягую усі числа зі строки maxGrade у g (бо maxGrade виглядає як '16 балів')
                                     {
                                         try
                                         {
-                                            if(Helper.ToValidate<Models.Task>(task, task.MaxGrade, g, "MaxGrade"))
+                                            if (Helper.ToValidate<Models.Task>(task, task.MaxGrade, g, "MaxGrade"))
                                             {
                                                 errors.Add("Через зміну максимальної кількості балів за " + task.Name.ToString() + " усі здані роботи на це завдання обнулились (окрім тих, що були в excel-файлі і відповідають валідації)\n");
                                                 task.MaxGrade = g;
@@ -337,33 +364,21 @@ namespace CounterWeb.Controllers
                                             return RedirectToAction(nameof(Show), new { id = courseId });
                                         }
                                     }
-                                    // явно вкажемо контексту, щоб він не відслідковував task
-                                    _context.Entry(task).State = EntityState.Detached;
                                     tasks.Add((col.ColumnNumber(), task));
                                 }
-                            
+
+
                             }
 
                             //перегляд усіх учнів
                             foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
                             {
-                                /*// витягую ім'я та призвище з рядка excel
-                                string lastName = row.Cell(1).Value.ToString().Trim().Split(' ').First();
-                                string firstName = row.Cell(1).Value.ToString().Trim().Split(' ').Last();*/
-
-                                // витягую саме того юзера, що має такі ім'я - прізвище, та є у відповідному курсі
-                                /*var user = await
-                                    (
-                                        from usr in _context.Users
-                                        where usr.FirstName == firstName && usr.LastName == lastName
-                                        join usrCrs in _context.UserCourses on usr.UserId equals usrCrs.UserId
-                                        where usrCrs.CourseId == courseId
-                                        select usr
-
-                                    ).AsNoTracking().FirstOrDefaultAsync();*/
-
                                 // витягую ім'я юзера з клітинки
                                 string cellUser = row.Cell(1).Value.ToString();
+                                if (cellUser is null)
+                                {
+                                    continue;
+                                }
                                 // витягую усіх юзерів мого курсу
                                 var userList = await
                                     (
@@ -374,14 +389,14 @@ namespace CounterWeb.Controllers
 
                                     ).AsNoTracking().ToListAsync();
                                 // витягую найбільш схожого юзера та відцоток схожості
-                                var jaroWink = Helper.StringMathing(userList, cellUser);
-                                User user = new User();
+                                var jaroWink = Helper.StringMatching<User>(userList, cellUser);
+                                User? user = new User();
                                 if (jaroWink.Item1 >= 0.95)
                                     user = jaroWink.Item2;
                                 else
                                 {
                                     // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
-                                    TempData["Message"] = "378 строка, реалізація jaroWink для user";
+                                    TempData["Message"] = "CoursesController -> Import, реалізація jaroWink для user";
                                     return RedirectToAction(nameof(Show), new { id = courseId });
                                 }
 
