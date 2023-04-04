@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Authorization;
 using System.Data;
 using ClosedXML.Excel;
 using Newtonsoft.Json;
+using CounterWeb.Helper;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace CounterWeb.Controllers
 {
@@ -179,7 +181,7 @@ namespace CounterWeb.Controllers
                                                         .ToListAsync();
 
             ViewBag.UserCourseId = userCourse;
-            return View(Tuple.Create(teachList, studList, taskList));
+            return View(System.Tuple.Create(teachList, studList, taskList));
         }
 
         // GET: Courses/JOIN
@@ -193,7 +195,7 @@ namespace CounterWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Join(string encodedString)
         {
-            var decodedObject = Helper.ToDecode(encodedString);
+            var decodedObject = GeneralHelper.ToDecode(encodedString);
             var course = _context.Courses.Where(b=>b.CourseId == decodedObject.Item1 && b.Name == decodedObject.Item2).FirstOrDefault();
             if (course == null)
             {
@@ -276,212 +278,142 @@ namespace CounterWeb.Controllers
         public async Task<IActionResult> Import(int courseId, IFormFile fileExcel)
         {
             List<string> errors = new List<string>();
-            if (ModelState.IsValid && fileExcel != null)
+            if (!ModelState.IsValid || fileExcel == null)
             {
-                using (var stream = new FileStream(fileExcel.FileName, FileMode.Create))
+                TempData["Message"] = "Щось не так, перевірте свіій excel  файл.\n";
+                return RedirectToAction(nameof(Show), new { id = courseId });
+            }
+            // Дістаю excel документ
+            XLWorkbook workBook = ImportExcelHelper.GetWorkbook(fileExcel);
+
+            foreach (IXLWorksheet worksheet in workBook.Worksheets)
+            {
+                // дістаю курс, назва якого - назва сторінки excel файлі
+                var course = ImportExcelHelper.GetCourse(worksheet, courseId);
+
+                if (course is null)
                 {
-                    await fileExcel.CopyToAsync(stream);
-                    using (XLWorkbook workBook = new XLWorkbook(stream))
+                    // ЧИ ТРЕБА СТВОРЮВАТИ НОВИЙ КУРС?
+                    errors.Add("Курс з таким ім'ям не знайдений '" + worksheet.Name + "'. Перевірте назву відповідної excel сторінки");
+                    continue;
+                }
+                // дістаю усі завдання, чиї назви є серед назв стовпців (повертаю номер колонки, в якій знаходиться таск і відповідний таск)
+                (List<(int, Models.Task)>, List<string>) tasks_errors;
+                try
+                {
+                    tasks_errors = ImportExcelHelper.GetTask(worksheet, courseId);
+                }
+                catch (Exception ex)
+                {
+                    TempData["Message"] = ex.Message;
+                    return RedirectToAction(nameof(Show), new { id = courseId });
+                }
+                if (tasks_errors.Item1 is null)
+                {
+                    errors.Add("Завдань в курсі '" + worksheet.Name + "' не знайдено, тому оцінити їх не можливо. Перевірте назви стовпчиків, у відповідній excel сторінці");
+                    continue;
+                }
+                var tasks = tasks_errors.Item1;
+                errors.AddRange(tasks_errors.Item2);
+
+                //перегляд усіх рядків / учнів
+                foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
+                {
+                    // витягую ім'я юзера з клітинки
+                    string cellUser = row.Cell(1).Value.ToString();
+                    if (cellUser == string.Empty)
+                        continue;
+                    User? user = null;
+                    try
                     {
-                        // перевіряємо усі сторінки excel файлу
-                        foreach (IXLWorksheet worksheet in workBook.Worksheets)
+                        user = ImportExcelHelper.GetUser(cellUser, courseId);
+                    }
+                    catch (Exception ex)
+                    {
+                        TempData["Message"] = ex.Message;
+                        return RedirectToAction(nameof(Show), new { id = courseId });
+                    }
+
+                    if (user is null)
+                    {
+                        errors.Add("Ученя '" + cellUser + "' не знайдено, перевірте правильність ініціалів.");
+                        continue;
+                    }
+
+                    //пробігаюсь по стовпцям / таскам
+                    foreach (var t in tasks)
+                    {
+                        // явно вкажемо контексту, щоб він скинув усі об'єкти, що відслідковував (запобігає вийнятку)
+                        _context.ChangeTracker.Clear();
+                        // витягую CompletedTask юзера, що відповідає нашому таску та юзеру
+                        var ctask = await
+                            (
+                                from ctsk in _context.CompletedTasks
+                                where ctsk.TaskId == t.Item2.TaskId
+                                join usrCrs in _context.UserCourses on ctsk.UserCourseId equals usrCrs.UserCourseId
+                                where usrCrs.CourseId == courseId && usrCrs.UserId == user.UserId
+                                select ctsk
+                            ).FirstOrDefaultAsync();
+                        // ВИВЕСТИ ПОВІДОМЛЕННЯ ЮЗЕРУ
+                        if (ctask is null)
                         {
-                            //worksheet.Name - назва курсу (назва excel файлу)
-                            var course = await
-                                (
-                                    from crs in _context.Courses
-                                    where crs.Name.Contains(worksheet.Name) && crs.CourseId == courseId
-                                    select crs
-                                ).AsNoTracking().FirstOrDefaultAsync();
+                            int g1 = 0;
+                            if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g1) && g1 != 0)
+                                errors.Add("Готового домашнього завдання учня " + user.LastName + " " + user.FirstName + " до " + t.Item2.Name + " не існує, його не можливо оцінити ( клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1 - 1).ToString() + "]) \n");
+                            continue;
+                        }
 
-                            if (course is null)
+                        int g = 0;
+                        // перевіряємо валідацію для CompletedTask.Grade
+                        if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g) && (ctask.Grade != g))
+                        {
+                            try
                             {
-                                // запитати чи хоче юзер створити новий курс, інфа з якого є в excel file, але якого нема в бд
-                                TempData["Message"] = "Помилка з назвою курсу в excel файлі";
+                                if (GeneralHelper.ToValidate<Models.CompletedTask>(ctask, ctask.Grade, g, "Grade"))
+                                {
+                                    ctask.Grade = g;
+                                    _context.Update(ctask);
+                                    _context.SaveChanges();
+                                }
+                                else
+                                {
+                                    errors.Add("Клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1 - 1).ToString() + "] не пройшла валідацію (зверніть увагу на максимальний бал за завдання)\n");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                TempData["Message"] = "#val2: " + ex.Message;
                                 return RedirectToAction(nameof(Show), new { id = courseId });
-                            }
-
-                            // формую список тасків, які є в excel файлі, та в БД у відповідного курса (зберігається номер колонки та відповідний таск).
-                            List<(int, Models.Task)> tasks = new List<(int, Models.Task)>();
-                            foreach (IXLColumn col in worksheet.ColumnsUsed().Skip(1))
-                            {
-                                string cellText = col.Cell(1).Value.ToString();
-
-                                // витягую значення MaxGrade (те що в скобочках біля назви завдання) якщо воно є
-                                int? startIndex = cellText.IndexOf('(') + 1;
-                                int? endIndex = cellText.LastIndexOf(')');
-                                string? maxGrade = null;
-                                if (startIndex is not null && endIndex is not null)
-                                    maxGrade = cellText[startIndex.Value..endIndex.Value]; // у цю змінну я витягую увесь вміст скобочок
-                                else
-                                    errors.Add("Максимальний бал для стовпця " + (col.ColumnNumber() - 1).ToString() + " не був змінений через неправильний формат вводу. Якщо ви хочете змінити максимальну оцінку для завдання, то слідуйте наступному шаблону 'Назва завдання (16 балів)'\n");
-
-
-
-                                // витягую task, чиє ім'я найбільш схоже до того, що в табличці написано
-                                string? taskName = maxGrade is null ? cellText : cellText.Replace('(' + maxGrade + ')', "");
-
-                                if (taskName is null)
-                                {
-                                    continue;
-                                }
-
-                                var taskList = await _context.Tasks.AsNoTracking().Where(a => a.CourseId == courseId).ToListAsync();
-                                
-                                var jaro_Wink = Helper.StringMatching<Models.Task>(taskList, taskName);
-
-                                Models.Task? task = new Models.Task();
-                                if (jaro_Wink.Item1 >= 0.5)
-                                    task = jaro_Wink.Item2;
-                                else
-                                {
-                                    // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
-                                    TempData["Message"] = "CoursesController -> Import, реалізація jaroWink для task";
-                                    return RedirectToAction(nameof(Show), new { id = courseId });
-                                }
-
-                                if (task is not null)
-                                {
-
-
-                                    // перевіряємо валідацію для Task.MaxGrade
-                                    int g = -1;
-                                    if (maxGrade is not null && int.TryParse(new string(maxGrade.Where(char.IsDigit).ToArray()), out g)) // витягую усі числа зі строки maxGrade у g (бо maxGrade виглядає як '16 балів')
-                                    {
-                                        try
-                                        {
-                                            if (Helper.ToValidate<Models.Task>(task, task.MaxGrade, g, "MaxGrade"))
-                                            {
-                                                errors.Add("Через зміну максимальної кількості балів за " + task.Name.ToString() + " усі здані роботи на це завдання обнулились (окрім тих, що були в excel-файлі і відповідають валідації)\n");
-                                                task.MaxGrade = g;
-                                                _context.Update(task);
-                                                _context.SaveChanges();
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            TempData["Message"] = "#val1: " + ex.Message;
-                                            return RedirectToAction(nameof(Show), new { id = courseId });
-                                        }
-                                    }
-                                    tasks.Add((col.ColumnNumber(), task));
-                                }
-
-
-                            }
-
-                            //перегляд усіх учнів
-                            foreach (IXLRow row in worksheet.RowsUsed().Skip(1))
-                            {
-                                // витягую ім'я юзера з клітинки
-                                string cellUser = row.Cell(1).Value.ToString();
-                                if (cellUser is null)
-                                {
-                                    continue;
-                                }
-                                // витягую усіх юзерів мого курсу
-                                var userList = await
-                                    (
-                                        from usr in _context.Users
-                                        join usrCrs in _context.UserCourses on usr.UserId equals usrCrs.UserId
-                                        where usrCrs.CourseId == courseId
-                                        select usr
-
-                                    ).AsNoTracking().ToListAsync();
-                                // витягую найбільш схожого юзера та відцоток схожості
-                                var jaroWink = Helper.StringMatching<User>(userList, cellUser);
-                                User? user = new User();
-                                if (jaroWink.Item1 >= 0.95)
-                                    user = jaroWink.Item2;
-                                else
-                                {
-                                    // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
-                                    TempData["Message"] = "CoursesController -> Import, реалізація jaroWink для user";
-                                    return RedirectToAction(nameof(Show), new { id = courseId });
-                                }
-
-
-
-                                if (user is not null)
-                                {
-                                    //пробігаюсь по таскам
-                                    foreach (var t in tasks)
-                                    {
-                                        // явно вкажемо контексту, щоб він скинув усі об'єкти, що відслідковував (запобігає вийнятку)
-                                        _context.ChangeTracker.Clear();
-                                        // витягую CompletedTask юзера, що відповідає нашому таску та юзеру
-                                        var ctask = await
-                                            (
-                                                from ctsk in _context.CompletedTasks
-                                                where ctsk.TaskId == t.Item2.TaskId
-                                                join usrCrs in _context.UserCourses on ctsk.UserCourseId equals usrCrs.UserCourseId
-                                                where usrCrs.CourseId == courseId && usrCrs.UserId == user.UserId
-                                                select ctsk
-                                            ).FirstOrDefaultAsync();
-                                        // ВИВЕСТИ ПОВІДОМЛЕННЯ ЮЗЕРУ
-                                        if (ctask is null)
-                                        {
-                                            int g1 = 0;
-                                            if (int.TryParse( row.Cell(t.Item1).Value.ToString(),out g1) && g1 != 0)
-                                                errors.Add("Готового домашнього завдання учня " + user.LastName + " " + user.FirstName + " до " + t.Item2.Name + " не існує, його не можливо оцінити ( клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1 - 1).ToString() + "]) \n");
-                                            continue;
-                                        }
-
-                                        int g = 0;
-
-                                        // перевіряємо валідацію для CompletedTask.Grade
-                                        if (int.TryParse(row.Cell(t.Item1).Value.ToString(), out g) && (ctask.Grade != g))
-                                        {
-                                            try
-                                            {
-                                                if(Helper.ToValidate<Models.CompletedTask>(ctask, ctask.Grade, g, "Grade"))
-                                                {
-                                                    ctask.Grade = g;
-                                                    _context.Update(ctask);
-                                                    _context.SaveChanges();
-                                                }
-                                                else
-                                                {
-                                                    errors.Add("Клітинка [" + (row.RowNumber() - 1).ToString() + ";" + (t.Item1-1).ToString() + "] не пройшла валідацію (зверніть увагу на максимальний бал за завдання)\n");
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                TempData["Message"] = "#val2: " + ex.Message;
-                                                return RedirectToAction(nameof(Show), new { id = courseId });
-                                            }
-                                        }
-                                        // явно вкажемо контексту, щоб він не відслідковував ctask
-                                        /*if(ctask.Task is not null)
-                                            _context.Entry(ctask.Task).State = EntityState.Detached;
-                                        _context.Entry(ctask).State = EntityState.Detached;*/
-                                    }
-                                }
                             }
                         }
                     }
-                }
-
-
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception e)
-                {
-                    TempData["Message"] = "#2: " + e.Message;
-                    return RedirectToAction(nameof(Show), new { id = courseId });
 
                 }
+
             }
+
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                TempData["Message"] = "#2: " + e.Message;
+                return RedirectToAction(nameof(Show), new { id = courseId });
+
+            }
+
             string mess = string.Empty;
-            foreach(var err in errors)
+            foreach (var err in errors)
             {
                 mess += err;
             }
             TempData["Message"] = "Успіх!\n" + mess;
             return RedirectToAction(nameof(Show), new { id = courseId });
         }
+
 
         // POST: Courses/Export
         public ActionResult Export(int? courseId, string? studListJson, string? userCourseListJson)
