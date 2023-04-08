@@ -2,6 +2,9 @@
 using CounterWeb.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 
 namespace CounterWeb.Controllers
 {
@@ -10,11 +13,15 @@ namespace CounterWeb.Controllers
         private readonly UserManager<UserIdentity> _userManager;
         private readonly SignInManager<UserIdentity> _signInManager;
         private readonly CounterDbContext _context;
-        public AccountController(UserManager<UserIdentity> userManager, SignInManager<UserIdentity> signInManager, CounterDbContext context)
+        private readonly SmtpClient _smtpClient;
+        private readonly SmtpSettings _smtpSettings;
+        public AccountController(UserManager<UserIdentity> userManager, SignInManager<UserIdentity> signInManager, CounterDbContext context, SmtpClient smtpClient, SmtpSettings smtpSettings)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _smtpClient = smtpClient;
+            _smtpSettings = smtpSettings;
         }
 
         [HttpGet]
@@ -25,16 +32,20 @@ namespace CounterWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if(ModelState.IsValid)
+            if(_userManager.Users.Where(a=>a.Email == model.Email).Count() > 0)
             {
-                
+                ModelState.AddModelError("", "Ця адреса електронної пошти вже зареєстрована, спробуйте увійти в обліковий запис, використовуючи цю адресу електронної пошти, або вкажіть іншу під час реєстрації.");
+            }
+            if (ModelState.IsValid)
+            {
+
                 UserIdentity user = new UserIdentity
-                { 
-                    FirstName = model.FirstName, 
-                    LastName = model.LastName, 
-                    Email = model.Email, 
-                    UserName = model.Email, 
-                    //UserId = newUser.UserId 
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    UserName = model.Email,
+                    EmailConfirmed = false
                 };
                 var result = await _userManager.CreateAsync(user, model.Password); // закидаємо користувача до бд-шки
                 if (result.Succeeded)
@@ -75,7 +86,24 @@ namespace CounterWeb.Controllers
                     // установка кукі
                     await _signInManager.SignInAsync(user, isPersistent: false);
 
-                    return RedirectToAction("Index", "Home"); 
+                    //return RedirectToAction("Index", "Home");
+
+                    //Підтвердження Email адреси
+
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code }, protocol: HttpContext.Request.Scheme);
+
+                    // Надсилання email з посиланням на підтвердження
+
+                    var message = new MailMessage();
+                    message.From = new MailAddress(_smtpSettings.UserName);
+                    message.To.Add(new MailAddress(model.Email));
+                    message.Subject = "Підтвердіть ваш email";
+                    message.Body = $"Підтвердіть ваш обліковий запис, перейшовши за посиланням: {callbackUrl}";
+                    await _smtpClient.SendMailAsync(message);
+
+                    TempData["Message"] = "Будь ласка, перевірте вашу почту (папку 'спам') та підтвердіть свій email.";
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
@@ -86,6 +114,36 @@ namespace CounterWeb.Controllers
                 }
             }
             return View(model);
+        }
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        {
+            if (userId == null || code == null)
+            {
+                return NotFound();
+            }
+
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Перевірити, що токен підтвердження збігається
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+            if (result.Succeeded)
+            {
+                user.EmailConfirmed = true;
+                TempData["Message"] = "Ваш email підтверджено!";
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                TempData["Message"] = "Виникла проблема з підтвердженням email, будь ласка, сппробуйте ще раз.";
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         [HttpGet]

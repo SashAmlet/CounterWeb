@@ -179,7 +179,8 @@ namespace CounterWeb.Helper
 
             int incompleteMatches = 0; // коли s1[i] == s2[i] +- matchDistance
             int completeMatches = 0;   // коли s1[i] == s2[i]
-
+            //bool[] s1Maches = new bool[len1];
+            //bool[] s2Maches = new bool[len2];
 
             for (int i = 0; i < len1; i++)
             {
@@ -187,6 +188,8 @@ namespace CounterWeb.Helper
                 if (i <= len2 - 1 && s1[i] == s2[i])
                 {
                     completeMatches++;
+                    //s1Maches[i] = true;
+                    //s2Maches[i] = true;
                 }
                 // встановлюємо той самий діапазон s1[i] <-> s2[i] +-matchDistance
                 int start = Math.Max(0, i - matchDistance);
@@ -199,7 +202,10 @@ namespace CounterWeb.Helper
                         continue;
                     if (i == j)
                         continue;
-
+                    //if (s2Maches[j])
+                    //    continue;
+                    //s1Maches[i] = true;
+                    //s2Maches[j] = true;
                     incompleteMatches++;
                     break;
                 }

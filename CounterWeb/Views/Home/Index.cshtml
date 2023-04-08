@@ -2,6 +2,10 @@
     ViewData["Title"] = "Home Page";
 }
 
+@if (TempData.ContainsKey("Message"))
+{
+    <div class="alert alert-success">@Html.Raw(TempData["Message"].ToString().Replace("\n", "<br>"))</div>
+}
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
 </div>

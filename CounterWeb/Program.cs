@@ -3,6 +3,9 @@ using CounterWeb.Models;
 using FluentAssertions.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
+using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,8 +29,11 @@ builder.Services.AddIdentity<UserIdentity, IdentityRole>(options =>
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
     options.Password.RequiredLength = 6;
+    options.Tokens.ProviderMap.Add("Default", new TokenProviderDescriptor(
+            typeof(IUserTwoFactorTokenProvider<IdentityUser>)));// Реєстрація провайдера токена двофакторної автентифікації за замовчуванням
 })
-    .AddEntityFrameworkStores<IdentityContext>();
+    .AddEntityFrameworkStores<IdentityContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -39,6 +45,33 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 //
 
+//
+var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json")
+            .Build();
+
+var smtpSettings = configuration.GetSection("SmtpSettings")
+    .Get<SmtpSettings>();
+
+// Регистрация настроек SMTP-хоста
+builder.Services.AddSingleton(smtpSettings);
+
+// Регистрация клиента для отправки электронной почты
+var smtpClient = new SmtpClient
+{
+    Host = smtpSettings.Host,
+    Port = smtpSettings.Port,
+    EnableSsl = smtpSettings.EnableSsl,
+    UseDefaultCredentials = false,
+    DeliveryMethod = SmtpDeliveryMethod.Network,
+    Credentials = new NetworkCredential(smtpSettings.UserName, smtpSettings.Password)
+};
+builder.Services.AddSingleton(smtpClient);
+
+//var client = new SmtpClient();
+
+//
 var app = builder.Build();
 
 // Задати початкові ролі
@@ -57,7 +90,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while seeding the database." + DateTime.Now.ToString());
     }
 }
-
 
 
 // Configure the HTTP request pipeline.
