@@ -9,6 +9,8 @@
 }
     
 <link rel="stylesheet" type="text/css" href="~/css/chart.css">
+<link rel="stylesheet" type="text/css" href="~/css/listMove.css">
+
     <div class="container mt-5">
         <h2 class="text-center mb-4">Вчителі</h2>
             <ul class="list-group">
@@ -80,19 +82,60 @@
             <h3>Завантаження інформації у файл</h3>
             <a asp-action="Export" asp-route-courseId="@ViewBag.Id" asp-route-studListJson="@Json.Serialize(@Model.Item2.ToArray())" asp-route-userCourseListJson="@Json.Serialize(@ViewBag.UserCourseId)">Завантажити </a>
         </div>
+        
+
+        ////////////////////////////////
+        <button id="showModalBtn">Показать модальное окно</button>
+        <div>
+        <div class="modal-overlay" id="modal-overlay">
+            <section class="module">
+                <h1 class="tasks__title">To do list</h1>
+                <ul class="left_list">
+                    <li class="left_item">learn HTML</li>
+                    <li class="left_item">learn CSS</li>
+                    <li class="left_item">learn JavaScript</li>
+                    <li class="left_item">learn PHP</li>
+                    <li class="left_item">stay alive</li>
+                </ul>
+                <ul class="right_list">
+                    <li class="right_item">learn HTML</li>
+                    <li class="right_item">learn CSS</li>
+                    <li class="right_item">learn JavaScript</li>
+                    <li class="right_item">learn PHP</li>
+                    <li class="right_item">stay alive</li>
+                </ul>
+            </section>
+            <button class="apply-btn">Применить</button>
+        </div>
+        </div>
+        
+
+        ////////////////////////////////
 
 
+        
         <h2 class="text-center mb-4">Статистика</h2>
         <div class="charts-container">
             <div id="chart1" class="chart"></div>
             <div id="chart2" class="chart"></div>
         </div>
+
+
+
     }
+
+    
+
+
+
+
+
 
 @section scripts
 {
 <script type = "text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript" src="~/js/chart.js"></script> 
+<script type = "text/javascript" src="~/js/chart.js"></script>
+<script type = "text/javascript" src="~/js/listMove.js"></script>
 
 <script>
   google.charts.load('current', { 'packages': ['corechart'] });
@@ -109,5 +152,30 @@
         var studentsEncoded = encodeURIComponent(jsonString) // кодування самого json у string
         drawBarChart('@ViewBag.Id', studentsEncoded);
   });
+</script>
+
+<script>
+    // Получаем элементы DOM
+    const showModalBtn = document.getElementById('showModalBtn');
+    const overlay = document.getElementById('modal-overlay');
+
+    // Показать модальное окно при клике на кнопку
+    showModalBtn.addEventListener('click', () => {
+      overlay.style.display = 'flex'; // Отображаем оверлей
+    });
+
+    // Закрыть модальное окно при клике вне модального окна
+    overlay.addEventListener('click', () => {
+        if (event.target === overlay) {
+            overlay.style.display = 'none'; // Скрываем оверлей
+        }
+    });
+    // Применить действие при клике на кнопку "применить"
+    const applyBtn = document.querySelector('.apply-btn');
+    applyBtn.addEventListener('click', () => {
+      // Ваш код действия при нажатии на кнопку "применить" здесь
+      overlay.style.display = 'none';
+    });
+
 </script>
 }

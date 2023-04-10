@@ -45,7 +45,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 //
 
-//
+// для перевірки мила
 var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
@@ -54,10 +54,10 @@ var configuration = new ConfigurationBuilder()
 var smtpSettings = configuration.GetSection("SmtpSettings")
     .Get<SmtpSettings>();
 
-// Регистрация настроек SMTP-хоста
+// Реєстрація налаштувань SMTP-хоста (беру зі свого json-чика (appsettings))
 builder.Services.AddSingleton(smtpSettings);
 
-// Регистрация клиента для отправки электронной почты
+// Реєстрація клієнта для надсилання електронної пошти
 var smtpClient = new SmtpClient
 {
     Host = smtpSettings.Host,
@@ -68,8 +68,6 @@ var smtpClient = new SmtpClient
     Credentials = new NetworkCredential(smtpSettings.UserName, smtpSettings.Password)
 };
 builder.Services.AddSingleton(smtpClient);
-
-//var client = new SmtpClient();
 
 //
 var app = builder.Build();

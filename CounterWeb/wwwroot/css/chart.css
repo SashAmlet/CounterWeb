@@ -1,4 +1,5 @@
-﻿.charts-container {
+.charts-container {
+    /* position: absolute; */
     display: flex;
     flex-wrap: wrap;
     align-items: center;
