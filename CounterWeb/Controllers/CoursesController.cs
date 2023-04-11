@@ -336,7 +336,8 @@ namespace CounterWeb.Controllers
 
                     if (user is null)
                     {
-                        errors.Add("Ученя '" + cellUser + "' не знайдено, перевірте правильність ініціалів.");
+                        // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
+                        errors.Add("Учня '" + cellUser + "' не знайдено, перевірте правильність ініціалів.");
                         continue;
                     }
 

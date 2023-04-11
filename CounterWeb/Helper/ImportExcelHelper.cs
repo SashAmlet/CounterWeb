@@ -69,12 +69,12 @@ namespace CounterWeb.Helper
                     var jaro_Wink = ImportExcelHelper.StringMatching<Models.Task>(taskList, taskName);
 
                     Models.Task? task = new Models.Task();
-                    if (jaro_Wink.Item1 >= 0.5)
+                    if (jaro_Wink.Item1 >= 0.85)
                         task = jaro_Wink.Item2;
                     else
                     {
-                        // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
-                        throw new Exception("ERROR:: ImportExcelHelper -> GetTask, реалізація jaroWink для task");
+                        errors.Add("Завдання '" + taskName + "' не вдалося індентифікуівати. Перевірте будь ласка назву та спробуйтеще раз.");
+                        task = null;
                     }
 
                     if (task is not null)
@@ -120,14 +120,13 @@ namespace CounterWeb.Helper
                 // витягую найбільш схожого юзера та відцоток схожості
                 var jaroWink = ImportExcelHelper.StringMatching<User>(userList, userName);
 
-                User user = new User();
+                User? user = new User();
 
                 if (jaroWink.Item1 >= 0.95)
                     user = jaroWink.Item2;
                 else
                 {
-                    // У ВИПАДКУ ПОГАНОГО ЗБІГУ ЗРОБИТИ ЩОСЬ
-                    throw new Exception("ImportExcelHelper -> GetUser, реалізація jaroWink для user");
+                    user = null;
                 }
 
                 return user;
