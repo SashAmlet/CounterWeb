@@ -6436,10 +6436,10 @@ ul.u-text li:last-child {
   padding-left: 0 !important;
 }
 .u-text-default {
-  display: table;
+  /* display: table; */
   align-self: flex-start;
   width: -webkit-fit-content;
-  width: fit-content;
+  /* width: fit-content; */
   width: -moz-fit-content;
 }
 .u-text-default:empty {
@@ -13802,7 +13802,7 @@ section.u-image:not(.u-hover-box),
   transform: translate(0, 50%);
 }
 .u-group .u-container-layout > * {
-  /* position: relative; */
+  position: relative;
 }
 .u-group {
   display: flex;
